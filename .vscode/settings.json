@@ -1,4 +1,7 @@
 {
+	"editor.insertSpaces": false,
+	"editor.useTabStops": true,
+	"editor.detectIndentation": false,
 	"[typescript]": {
 		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
