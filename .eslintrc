@@ -7,5 +7,9 @@
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended"
 	],
-	"ignorePatterns": ["*.js"]
+	"ignorePatterns": ["*.js"],
+	"rules": {
+		"@typescript-eslint/no-namespace": 0,
+		"no-inner-declarations": 0
+	}
 }
