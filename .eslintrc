@@ -9,6 +9,7 @@
 	],
 	"ignorePatterns": ["*.js"],
 	"rules": {
+		"@typescript-eslint/explicit-member-accessibility": ["warn"],
 		"@typescript-eslint/no-namespace": 0,
 		"no-inner-declarations": 0
 	}
