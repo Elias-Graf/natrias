@@ -2,6 +2,12 @@ import { Dir } from '../globals/direction';
 import { Tetromino } from './tetromino';
 import { Point2D } from '../globals';
 
+/*
+ TODO: Tetromino -> getRotation()
+ TODO: Rotation if on the bottom, still rotate if not added to rows
+ TODO: Also on sides
+*/
+
 const gameBoard = document.createElement('div');
 
 const t = new (class implements Tetromino {
@@ -135,7 +141,8 @@ export class PhysicsEngine {
 				tetromino.getOrigin().getX(),
 				tetromino.getOrigin().getY(),
 				newBlocks
-			)
+			) &&
+			!this.checkCollision(tetromino, tetromino.getOrigin(), newBlocks)
 		) {
 			// Clear old tetromino
 			this.setTetromino(tetromino, false);
@@ -162,7 +169,7 @@ export class PhysicsEngine {
 				newOrigin.getY(),
 				tetromino.getBlocks()
 			) &&
-			!this.checkCollision(tetromino, newOrigin)
+			!this.checkCollision(tetromino, newOrigin, tetromino.getBlocks())
 		) {
 			// Clear old tetromino
 			this.setTetromino(tetromino, false);
@@ -174,19 +181,23 @@ export class PhysicsEngine {
 	}
 
 	/**
-	 * Method that checks collision of tetromino with other blocks
+	 * Method that checks collision of tetromino with other blocks when moving
 	 */
-	public checkCollision(tetromino: Tetromino, newOrigin: Point2D): boolean {
+	public checkCollision(
+		tetromino: Tetromino,
+		origin: Point2D,
+		blocks: Point2D[]
+	): boolean {
 		const copyBoard = this.board;
 		for (const block of tetromino.getBlocks()) {
 			copyBoard[tetromino.getOrigin().getY() + block.getY()][
 				tetromino.getOrigin().getX() + block.getX()
 			] = false;
 		}
-		for (const block of tetromino.getBlocks()) {
+		for (const block of blocks) {
 			if (
-				copyBoard[newOrigin.getY() + block.getY()][
-					newOrigin.getX() + block.getX()
+				copyBoard[origin.getY() + block.getY()][
+					origin.getX() + block.getX()
 				] === true
 			) {
 				return true;
