@@ -3,11 +3,26 @@ export class Point2D {
 	private y: number;
 
 	/**
+	 * Allows cloning of a specific point
+	 * @param p what point to clone
+	 */
+	public static clone(p: Point2D): Point2D {
+		return new Point2D(p.getX(), p.getY());
+	}
+
+	/**
 	 * Constructor of the Point2D class
 	 */
 	public constructor(x: number, y: number) {
 		this.x = x;
 		this.y = y;
+	}
+
+	/**
+	 * Colones the current point instance.
+	 */
+	public clone(): Point2D {
+		return Point2D.clone(this);
 	}
 
 	/**
