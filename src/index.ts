@@ -29,13 +29,6 @@ class TestD implements Drawable {
 		);
 		ctx.lineTo(TestD.BORDER_OFFSET, TestD.SIZE - TestD.BORDER_OFFSET);
 		ctx.lineTo(TestD.BORDER_OFFSET, TestD.BORDER_OFFSET);
-		// ctx.beginPath();
-		// ctx.moveTo(0, 0);
-		// ctx.lineTo(0, 50);
-		// ctx.lineTo(50, 50);
-		// ctx.lineTo(45, 45);
-		// ctx.lineTo(5, 45);
-		// ctx.lineTo(5, 5);
 		ctx.fillStyle = 'darkred';
 		ctx.fill();
 	}
