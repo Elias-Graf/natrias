@@ -1,4 +1,7 @@
 import { RenderEngine, Drawable } from './render';
+import { PhysicsEngine } from './physics/physicsEngine';
+
+new PhysicsEngine();
 
 class TestD implements Drawable {
 	public static SIZE = 50;
