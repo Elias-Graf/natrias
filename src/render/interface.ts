@@ -1,7 +1,7 @@
 import { Drawable } from './drawable';
 
 /**
- *  Describes what a renderer should be capable of
+ * Describes what a renderer should be capable of
  */
 export interface RendererInterface {
 	/**
