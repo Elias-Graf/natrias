@@ -19,6 +19,15 @@ export class Point2D {
 	}
 
 	/**
+	 * Assigns the values of another point to this one.
+	 * @param point the point of which values will be assigned
+	 */
+	public assign(point: Point2D): void {
+		this.x = point.getX();
+		this.y = point.getY();
+	}
+
+	/**
 	 * Colones the current point instance.
 	 */
 	public clone(): Point2D {
