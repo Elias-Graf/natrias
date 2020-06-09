@@ -4,6 +4,7 @@ import { Dir, Point2D } from './globals';
 import { Tetromino } from './physics/tetromino';
 import { DrawableTetromino } from './drawables/drawableTetromino';
 import { getTemplate } from './tetrominoes';
+import { TemplateType } from './tetrominoes/type';
 
 interface PhysicsInterface {
 	move(tetromino: Tetromino, direction: Dir): void;
@@ -53,17 +54,40 @@ class Netria {
 		const origin = new Point2D(5, 3);
 		switch (Math.floor(Math.random() * 6)) {
 			case 0:
-				this.activeTetromino = new DrawableTetromino(origin, getTemplate);
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.I)
+				);
 				break;
 			case 1:
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.L)
+				);
 				break;
 			case 2:
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.O)
+				);
 				break;
 			case 3:
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.S)
+				);
 				break;
 			case 4:
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.T)
+				);
 				break;
 			case 5:
+				this.activeTetromino = new DrawableTetromino(
+					origin,
+					getTemplate(TemplateType.Z)
+				);
 				break;
 		}
 	}
