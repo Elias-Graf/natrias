@@ -20,10 +20,12 @@ class Tetromino implements TetrominoInterface {
 	}
 
 	public static clone(tetromino: Tetromino): Tetromino {
-		return new Tetromino(
+		const t = new Tetromino(
 			tetromino.getOrigin().clone(),
 			tetromino.getBlocks().map(Point2D.clone)
 		);
+		t.setRotation(tetromino.getRotation());
+		return t;
 	}
 
 	public clone(): Tetromino {
