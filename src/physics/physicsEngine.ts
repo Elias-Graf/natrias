@@ -3,11 +3,12 @@ import { TetrominoInterface } from './tetromino';
 import { Point2D } from '../globals';
 import { MoveResponse } from './moveResponse';
 
-/*
- TODO: Tetromino -> getRotation() or getAbsolute() and implement calculation
- TODO: Rotation if on the bottom, still rotate if not added to rows
- TODO: Also on sides
-*/
+/**
+ * TODO: Replace calculateRotation function with "rotate" function.
+ *  As we're only ever rotating a single step, and only in one direction (not the band).
+ * TODO: Move piece into the board if rotated outside it. Currently we just don't allow
+ *  rotating.
+ */
 
 class Tetromino implements TetrominoInterface {
 	private origin: Point2D;
