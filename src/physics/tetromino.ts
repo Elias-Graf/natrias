@@ -1,6 +1,10 @@
 import { Point2D } from '../globals';
 
-export interface TetrominoInterface {
+/**
+ * TODO: Replace calculateRotation function with "rotate" function.
+ * As we're only ever rotating a single step, and only in one direction (not the band).
+ */
+export interface Tetromino {
 	getOrigin(): Point2D;
 	setOrigin(newOrigin: Point2D): void;
 	getBlocks(): Point2D[];
@@ -9,5 +13,5 @@ export interface TetrominoInterface {
 	setRotation(newRotation: number): void;
 	calculateNextRotation(): number;
 	calculateAbsoluteBlocks(): Point2D[];
-	clone(): TetrominoInterface;
+	clone(): Tetromino;
 }
