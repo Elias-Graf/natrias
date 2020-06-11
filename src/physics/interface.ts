@@ -1,8 +1,8 @@
 import { Dir } from '../globals';
-import { TetrominoInterface } from './tetromino';
+import { Tetromino } from './tetromino';
 import { MoveResponse } from './moveResponse';
 
 export interface PhysicsInterface {
-	move(tetromino: TetrominoInterface, dir: Dir): MoveResponse;
-	rotate(tetromino: TetrominoInterface): void;
+	move(tetromino: Tetromino, dir: Dir): MoveResponse;
+	rotate(tetromino: Tetromino): void;
 }
