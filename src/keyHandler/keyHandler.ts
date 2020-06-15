@@ -9,7 +9,7 @@ export class KeyHandler implements KeyHandlerInterface {
 		// Bind method to the class "this"
 		this.onKeyPress = this.onKeyPress.bind(this);
 		// Register the document key press listener
-		document.addEventListener('keypress', this.onKeyPress);
+		document.addEventListener('keyup', this.onKeyPress);
 	}
 	/**
 	 * Sets the "move" callback
@@ -49,13 +49,13 @@ export class KeyHandler implements KeyHandlerInterface {
 	private onKeyPress(event: KeyboardEvent): void {
 		switch (event.key) {
 			case 'ArrowUp':
-				this.dispatchMove(Dir.UP);
+				this.dispatchRotate();
 				break;
 			case 'ArrowRight':
 				this.dispatchMove(Dir.RIGHT);
 				break;
 			case 'ArrowDown':
-				this.dispatchRotate();
+				this.dispatchMove(Dir.DOWN);
 				break;
 			case 'ArrowLeft':
 				this.dispatchMove(Dir.LEFT);
