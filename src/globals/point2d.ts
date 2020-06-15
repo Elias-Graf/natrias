@@ -11,6 +11,14 @@ export class Point2D {
 	}
 
 	/**
+	 * Prints out "Point2D(x, y)"
+	 * @param p what point to stringify
+	 */
+	public static toString(p: Point2D): string {
+		return `Point2D(${p.getX()}, ${p.getY()})`;
+	}
+
+	/**
 	 * Constructor of the Point2D class
 	 */
 	public constructor(x: number, y: number) {
@@ -68,5 +76,13 @@ export class Point2D {
 	public setXY(x: number, y: number): void {
 		this.x = x;
 		this.y = y;
+	}
+
+	/**
+	 * Calls the static toString method.
+	 * @see Point2D.toString
+	 */
+	public toString(): string {
+		return Point2D.toString(this);
 	}
 }
