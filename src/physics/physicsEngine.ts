@@ -1,6 +1,7 @@
 import { Dir } from '../globals/direction';
 import { Tetromino } from './tetromino';
 import { MoveResponse } from './moveResponse';
+import { PhysicsInterface } from './interface';
 
 /**
  * TODO: Move piece into the board if rotated outside it. Currently we just don't allow
@@ -10,7 +11,7 @@ import { MoveResponse } from './moveResponse';
 /**
  * Class with the physics of the game
  */
-export class PhysicsEngine {
+export class PhysicsEngine implements PhysicsInterface {
 	private board: boolean[][] = [];
 	private static readonly WIDTH = 10;
 	private static readonly HEIGHT = 20;
@@ -65,7 +66,7 @@ export class PhysicsEngine {
 	/**
 	 * Method that lets tetromino turn
 	 */
-	private rotate(tetromino: Tetromino): void {
+	public rotate(tetromino: Tetromino): void {
 		const newTetromino = tetromino.clone();
 		newTetromino.setRotation(newTetromino.calculateNextRotation());
 
