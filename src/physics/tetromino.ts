@@ -1,5 +1,4 @@
 import { Point2D } from '../globals';
-import { Block } from './block';
 
 /**
  * TODO: Replace calculateRotation function with "rotate" function.
@@ -8,9 +7,6 @@ import { Block } from './block';
 export interface Tetromino {
 	getOrigin(): Point2D;
 	setOrigin(newOrigin: Point2D): void;
-	// DEPRECATED_getBlocks(): Point2D[];
-	// DEPRECATED_setBlocks(newBlocks: Point2D[]): void;
-	dissolve(): Block[];
 	getRotation(): number;
 	setRotation(newRotation: number): void;
 	calculateNextRotation(): number;
