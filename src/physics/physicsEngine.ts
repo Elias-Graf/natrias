@@ -110,7 +110,8 @@ export class PhysicsEngine implements PhysicsInterface {
 		return { hitBottom: false };
 	}
 
-	public removeFullLines(): void {
+	public removeFullLines(): number {
+		let count = 0;
 		let startingLine = -1;
 		for (let y = PhysicsEngine.HEIGHT - 1; y >= 0; y--) {
 			let lineFull = true;
@@ -118,6 +119,7 @@ export class PhysicsEngine implements PhysicsInterface {
 				if (this.getBlock(x, y) === null) lineFull = false;
 			}
 			if (lineFull) {
+				count++;
 				if (y > startingLine) startingLine = y;
 				const line = this.board[y];
 
@@ -146,6 +148,8 @@ export class PhysicsEngine implements PhysicsInterface {
 				}
 			}
 		}
+
+		return count;
 	}
 
 	public setBlocks(blocks: Block[]): void {

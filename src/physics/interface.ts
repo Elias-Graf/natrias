@@ -5,7 +5,7 @@ import { Block } from './block';
 
 export interface PhysicsInterface {
 	move(tetromino: Tetromino, dir: Dir): MoveResponse;
-	removeFullLines(): void;
+	removeFullLines(): number;
 	rotate(tetromino: Tetromino): void;
 	setBlocks(blocks: Block[]): void;
 }
