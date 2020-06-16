@@ -4,7 +4,6 @@ import { Block } from '../physics/block';
 
 export class DrawableBlock implements Drawable, Block {
 	public setRenderer(renderer: RendererInterface): void {
-		console.log('called', renderer);
 		this.renderer = renderer;
 	}
 	private position: Point2D;
