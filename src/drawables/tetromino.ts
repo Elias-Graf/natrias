@@ -1,34 +1,22 @@
-import { Drawable, RendererInterface } from '../render';
 import { Tetromino } from '../physics';
 import { Point2D } from '../globals';
-import { DrawableBlock } from './drawableBlock';
+import { DrawableBlock } from './block';
 import { TemplateType } from '../tetrominoes/type';
 import { getTemplate } from '../tetrominoes';
+import { DefaultDrawable } from '../render/defaultDrawable';
 
-export class DrawableTetromino implements Drawable, Tetromino {
+export class DrawableTetromino extends DefaultDrawable implements Tetromino {
 	private origin: Point2D;
-	private renderer: RendererInterface | undefined;
 	private rotation = 0;
 	private template: Point2D[];
 	private type: TemplateType;
 
 	public constructor(origin: Point2D, type: TemplateType) {
+		super();
+
 		this.origin = origin;
 		this.template = getTemplate(type);
 		this.type = type;
-	}
-	public rotate(): void {
-		if (this.type !== TemplateType.O) {
-			let nextRotation = this.rotation;
-			if (++nextRotation === 4) {
-				nextRotation = 0;
-			}
-			this.rotation = nextRotation;
-		}
-	}
-
-	public getType(): TemplateType {
-		return this.type;
 	}
 
 	public calculateAbsoluteBlocks(): Point2D[] {
@@ -74,6 +62,9 @@ export class DrawableTetromino implements Drawable, Tetromino {
 	public getOrigin(): Point2D {
 		return this.origin;
 	}
+	public getType(): TemplateType {
+		return this.type;
+	}
 	public getRotation(): number {
 		return this.rotation;
 	}
@@ -88,11 +79,17 @@ export class DrawableTetromino implements Drawable, Tetromino {
 			);
 		});
 	}
+	public rotate(): void {
+		if (this.type !== TemplateType.O) {
+			let nextRotation = this.rotation;
+			if (++nextRotation === 4) {
+				nextRotation = 0;
+			}
+			this.rotation = nextRotation;
+		}
+	}
 	public setOrigin(origin: Point2D): void {
 		this.origin = origin;
-	}
-	public setRenderer(renderer: RendererInterface): void {
-		this.renderer = renderer;
 	}
 	public setRotation(rotation: number): void {
 		this.rotation = rotation;
