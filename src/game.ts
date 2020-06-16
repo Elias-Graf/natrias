@@ -6,6 +6,7 @@ import { DrawableTetromino } from './drawables/drawableTetromino';
 import { getTemplate } from './tetrominoes';
 import { TemplateType } from './tetrominoes/type';
 import { PhysicsInterface } from './physics';
+import { DrawableBlock } from './drawables/drawableBlock';
 
 export class Natrias {
 	private renderer: RendererInterface;
@@ -41,9 +42,14 @@ export class Natrias {
 			const moveResponse = this.physics.move(this.activeTetromino, direction);
 			if (moveResponse.hitBottom) {
 				this.renderer.unregisterDrawable(this.activeTetromino);
-				this.activeTetromino
-					.dissolve()
-					.forEach((_) => this.renderer.registerDrawable(_));
+				const blocks = this.activeTetromino
+					.calculateAbsoluteBlocks()
+					.map((absoluteBlock) => new DrawableBlock(absoluteBlock));
+
+				blocks.forEach((block) => this.renderer.registerDrawable(block));
+				this.physics.setBlocks(blocks);
+
+				this.physics.removeFullLines();
 				this.spawnNextTetromino();
 			}
 		}
