@@ -104,35 +104,55 @@ export class PhysicsEngine implements PhysicsInterface {
 		if (!this.outOfBounds(newTetromino) && !this.isColliding(newTetromino)) {
 			tetromino.getOrigin().assign(newOrigin);
 		} else if (dir === Dir.DOWN) {
-			tetromino.dissolve().map((block) => {
-				const p = block.getPosition();
-				this.board[p.getY()][p.getX()] = block;
-			});
-
 			// // TODO: do cleanup stuff yay
-			// let linesToRemove = 0;
-			// for (let y = PhysicsEngine.HEIGHT - 1; y >= 0; y--) {
-			// 	let lineFull = true;
-			// 	for (let x = 0; x < PhysicsEngine.WIDTH - 1; x++) {
-			// 		if (this.getBlock(x, y) === null) lineFull = false;
-			// 	}
-			// 	if (lineFull) {
-			// 		linesToRemove++;
-
-			// 		const line = this.board[y];
-
-			// 		for (let i = 0; i < line.length; i++) {
-			// 			const block = line[i];
-			// 			if (block !== null) {
-			// 				block.onDelete();
-			// 				line[i] = null;
-			// 			}
-			// 		}
-			// 	}
-			// }
 			return { hitBottom: true };
 		}
 		return { hitBottom: false };
+	}
+
+	public removeFullLines(): void {
+		let startingLine = -1;
+		for (let y = PhysicsEngine.HEIGHT - 1; y >= 0; y--) {
+			let lineFull = true;
+			for (let x = 0; x < PhysicsEngine.WIDTH - 1; x++) {
+				if (this.getBlock(x, y) === null) lineFull = false;
+			}
+			if (lineFull) {
+				if (y > startingLine) startingLine = y;
+				const line = this.board[y];
+
+				for (let i = 0; i < line.length; i++) {
+					const block = line[i];
+					if (block !== null) {
+						block.onDelete();
+						line[i] = null;
+					}
+				}
+			}
+		}
+
+		if (startingLine !== -1) {
+			for (let y = startingLine - 1; y >= 0; y--) {
+				for (let x = 0; x < PhysicsEngine.WIDTH; x++) {
+					const block = this.getBlock(x, y);
+					if (block !== null) {
+						const position = block.getPosition();
+						position.setY(y + 1);
+						// Move the block
+						this.setBlock(position.getX(), position.getY(), block);
+						// Clear the old location
+						this.setBlock(x, y, null);
+					}
+				}
+			}
+		}
+	}
+
+	public setBlocks(blocks: Block[]): void {
+		blocks.forEach((block) => {
+			const position = block.getPosition();
+			this.setBlock(position.getX(), position.getY(), block);
+		});
 	}
 
 	/**
@@ -163,9 +183,9 @@ export class PhysicsEngine implements PhysicsInterface {
 		return false;
 	}
 
-	private setBlock(block: Block): void {
-		const position = block.getPosition();
-		this.board[position.getY()][position.getX()] = block;
+	private setBlock(x: number, y: number, block: Block | null): void {
+		if (block) block.getPosition().setXY(x, y);
+		this.board[y][x] = block;
 	}
 
 	private getBlock(x: number, y: number): Block | null {
