@@ -68,7 +68,7 @@ export class PhysicsEngine implements PhysicsInterface {
 	 */
 	public rotate(tetromino: Tetromino): void {
 		const newTetromino = tetromino.clone();
-		newTetromino.setRotation(newTetromino.calculateNextRotation());
+		newTetromino.rotate();
 
 		if (
 			!this.outOfBounds(newTetromino) &&
