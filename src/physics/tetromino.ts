@@ -1,4 +1,5 @@
 import { Point2D } from '../globals';
+import { TemplateType } from '../tetrominoes/type';
 
 /**
  * TODO: Replace calculateRotation function with "rotate" function.
@@ -9,9 +10,10 @@ export interface Tetromino {
 	setOrigin(newOrigin: Point2D): void;
 	getBlocks(): Point2D[];
 	setBlocks(newBlocks: Point2D[]): void;
+	getType(): TemplateType;
+	rotate(): void;
 	getRotation(): number;
 	setRotation(newRotation: number): void;
-	calculateNextRotation(): number;
 	calculateAbsoluteBlocks(): Point2D[];
 	clone(): Tetromino;
 }
