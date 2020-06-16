@@ -5,12 +5,7 @@ import { Tetromino } from './physics/tetromino';
 import { DrawableTetromino } from './drawables/drawableTetromino';
 import { getTemplate } from './tetrominoes';
 import { TemplateType } from './tetrominoes/type';
-import { DrawableBlock } from './drawables/drawableBlock';
-
-interface PhysicsInterface {
-	move(tetromino: Tetromino, direction: Dir): void;
-	rotate(tetromino: Tetromino): void;
-}
+import { PhysicsInterface } from './physics';
 
 export class Natrias {
 	private renderer: RendererInterface;
@@ -42,8 +37,16 @@ export class Natrias {
 	private onMove(direction: Dir): void {
 		if (this.activeTetromino === undefined) {
 			console.warn("couldn't move active tetromino, is was undefined");
-		} else this.physics.move(this.activeTetromino, direction);
-		console.log('should have moved');.
+		} else {
+			const moveResponse = this.physics.move(this.activeTetromino, direction);
+			if (moveResponse.hitBottom) {
+				this.renderer.unregisterDrawable(this.activeTetromino);
+				this.activeTetromino
+					.dissolve()
+					.forEach((_) => this.renderer.registerDrawable(_));
+				this.spawnNextTetromino();
+			}
+		}
 	}
 	/**
 	 * Is called when the key handler reports a rotation
@@ -61,45 +64,21 @@ export class Natrias {
 		switch (rdm) {
 			case 0:
 				template = getTemplate(TemplateType.I);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.I)
-				// );
 				break;
 			case 1:
 				template = getTemplate(TemplateType.L);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.L)
-				// );
 				break;
 			case 2:
 				template = getTemplate(TemplateType.O);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.O)
-				// );
 				break;
 			case 3:
 				template = getTemplate(TemplateType.S);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.S)
-				// );
 				break;
 			case 4:
 				template = getTemplate(TemplateType.T);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.T)
-				// );
 				break;
 			case 5:
 				template = getTemplate(TemplateType.Z);
-				// this.activeTetromino = new DrawableTetromino(
-				// 	origin,
-				// 	getTemplate(TemplateType.Z)
-				// );
 				break;
 		}
 		if (template === undefined) {

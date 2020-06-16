@@ -1,16 +1,25 @@
-import { Drawable } from '../render';
-import { Tetromino } from '../physics';
+import { Drawable, RendererInterface } from '../render';
+import { Tetromino, Block } from '../physics';
 import { Point2D } from '../globals';
 import { DrawableBlock } from './drawableBlock';
 
 export class DrawableTetromino implements Drawable, Tetromino {
 	private blocks: Point2D[];
 	private origin: Point2D;
+	private renderer: RendererInterface | undefined;
 	private rotation = 0;
 
 	public constructor(origin: Point2D, template: Point2D[]) {
 		this.origin = origin;
 		this.blocks = template;
+	}
+	public setRenderer(renderer: RendererInterface): void {
+		this.renderer = renderer;
+	}
+	public dissolve(): DrawableBlock[] {
+		return this.calculateAbsoluteBlocks().map(
+			(block) => new DrawableBlock(block)
+		);
 	}
 	public calculateAbsoluteBlocks(): Point2D[] {
 		const { blocks, origin } = this;
@@ -61,9 +70,7 @@ export class DrawableTetromino implements Drawable, Tetromino {
 		clone.setRotation(this.rotation);
 		return clone;
 	}
-	public getBlocks(): Point2D[] {
-		return this.blocks;
-	}
+
 	public getOrigin(): Point2D {
 		return this.origin;
 	}
@@ -80,9 +87,6 @@ export class DrawableTetromino implements Drawable, Tetromino {
 				)
 			);
 		});
-	}
-	public setBlocks(newBlocks: Point2D[]): void {
-		this.blocks = newBlocks;
 	}
 	public setOrigin(newOrigin: Point2D): void {
 		this.origin = newOrigin;

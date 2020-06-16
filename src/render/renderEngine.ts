@@ -39,7 +39,11 @@ export class RenderEngine {
 		// Check if we already know this drawable
 		if (this.drawables.indexOf(drawable) !== -1) {
 			console.warn('trying to register already registered drawable');
-		} else this.drawables.push(drawable);
+		} else {
+			console.log(drawable);
+			drawable.setRenderer(this);
+			this.drawables.push(drawable);
+		}
 	}
 	/**
 	 * Unregister a drawable from the renderer
@@ -52,7 +56,7 @@ export class RenderEngine {
 			console.warn(
 				'trying to unregister a drawable which has not yet been registered'
 			);
-		} else this.drawables.slice(DRAWABLE_INDEX, 1);
+		} else this.drawables.splice(DRAWABLE_INDEX, 1);
 	}
 	/**
 	 * Starts the renderer
