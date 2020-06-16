@@ -40,7 +40,6 @@ export class RenderEngine {
 		if (this.drawables.indexOf(drawable) !== -1) {
 			console.warn('trying to register already registered drawable');
 		} else {
-			console.log(drawable);
 			drawable.setRenderer(this);
 			this.drawables.push(drawable);
 		}
