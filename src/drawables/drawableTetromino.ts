@@ -4,27 +4,20 @@ import { Point2D } from '../globals';
 import { DrawableBlock } from './drawableBlock';
 
 export class DrawableTetromino implements Drawable, Tetromino {
-	private blocks: Point2D[];
 	private origin: Point2D;
 	private renderer: RendererInterface | undefined;
 	private rotation = 0;
+	private template: Point2D[];
 
 	public constructor(origin: Point2D, template: Point2D[]) {
 		this.origin = origin;
-		this.blocks = template;
+		this.template = template;
 	}
-	public setRenderer(renderer: RendererInterface): void {
-		this.renderer = renderer;
-	}
-	public dissolve(): DrawableBlock[] {
-		return this.calculateAbsoluteBlocks().map(
-			(block) => new DrawableBlock(block)
-		);
-	}
-	public calculateAbsoluteBlocks(): Point2D[] {
-		const { blocks, origin } = this;
 
-		return blocks.map((block) => {
+	public calculateAbsoluteBlocks(): Point2D[] {
+		const { origin, template } = this;
+
+		return template.map((block) => {
 			const blockX = block.getX();
 			const blockY = block.getY();
 			const newBlock = new Point2D(blockX, blockY);
@@ -56,42 +49,41 @@ export class DrawableTetromino implements Drawable, Tetromino {
 		});
 	}
 	public calculateNextRotation(): number {
-		let nextRotation = this.rotation;
-		if (++nextRotation === 4) {
-			nextRotation = 0;
-		}
-		return nextRotation;
+		throw new Error('Method not implemented.');
 	}
 	public clone(): Tetromino {
 		const clone = new DrawableTetromino(
 			this.origin.clone(),
-			this.blocks.map(Point2D.clone)
+			this.template.map(Point2D.clone)
 		);
+		// We need to clone additional properties
 		clone.setRotation(this.rotation);
 		return clone;
 	}
-
 	public getOrigin(): Point2D {
 		return this.origin;
 	}
 	public getRotation(): number {
 		return this.rotation;
 	}
-	public render(ctx: CanvasRenderingContext2D): void {
-		this.calculateAbsoluteBlocks().forEach((_) => {
+	public render(context: CanvasRenderingContext2D): void {
+		this.calculateAbsoluteBlocks().forEach((block) => {
 			DrawableBlock.render(
-				ctx,
+				context,
 				new Point2D(
-					_.getX() * DrawableBlock.SIZE,
-					_.getY() * DrawableBlock.SIZE
+					block.getX() * DrawableBlock.SIZE,
+					block.getY() * DrawableBlock.SIZE
 				)
 			);
 		});
 	}
-	public setOrigin(newOrigin: Point2D): void {
-		this.origin = newOrigin;
+	public setOrigin(origin: Point2D): void {
+		this.origin = origin;
 	}
-	public setRotation(newRotation: number): void {
-		this.rotation = newRotation;
+	public setRenderer(renderer: RendererInterface): void {
+		this.renderer = renderer;
+	}
+	public setRotation(rotation: number): void {
+		this.rotation = rotation;
 	}
 }

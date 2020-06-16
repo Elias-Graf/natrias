@@ -1,7 +1,6 @@
 import { RendererInterface } from './render';
 import { KeyHandlerInterface } from './keyHandler';
 import { Dir, Point2D } from './globals';
-import { Tetromino } from './physics/tetromino';
 import { DrawableTetromino } from './drawables/drawableTetromino';
 import { getTemplate } from './tetrominoes';
 import { TemplateType } from './tetrominoes/type';
