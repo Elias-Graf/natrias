@@ -1,17 +1,34 @@
 import { Drawable, RendererInterface } from '../render';
-import { Tetromino, Block } from '../physics';
+import { Tetromino } from '../physics';
 import { Point2D } from '../globals';
 import { DrawableBlock } from './drawableBlock';
+import { TemplateType } from '../tetrominoes/type';
+import { getTemplate } from '../tetrominoes';
 
 export class DrawableTetromino implements Drawable, Tetromino {
 	private origin: Point2D;
 	private renderer: RendererInterface | undefined;
 	private rotation = 0;
 	private template: Point2D[];
+	private type: TemplateType;
 
-	public constructor(origin: Point2D, template: Point2D[]) {
+	public constructor(origin: Point2D, type: TemplateType) {
 		this.origin = origin;
-		this.template = template;
+		this.template = getTemplate(type);
+		this.type = type;
+	}
+	public rotate(): void {
+		if (this.type !== TemplateType.O) {
+			let nextRotation = this.rotation;
+			if (++nextRotation === 4) {
+				nextRotation = 0;
+			}
+			this.rotation = nextRotation;
+		}
+	}
+
+	public getType(): TemplateType {
+		return this.type;
 	}
 
 	public calculateAbsoluteBlocks(): Point2D[] {
@@ -48,14 +65,8 @@ export class DrawableTetromino implements Drawable, Tetromino {
 			return newBlock;
 		});
 	}
-	public calculateNextRotation(): number {
-		throw new Error('Method not implemented.');
-	}
 	public clone(): Tetromino {
-		const clone = new DrawableTetromino(
-			this.origin.clone(),
-			this.template.map(Point2D.clone)
-		);
+		const clone = new DrawableTetromino(this.origin.clone(), this.type);
 		// We need to clone additional properties
 		clone.setRotation(this.rotation);
 		return clone;
