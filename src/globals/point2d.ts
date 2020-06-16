@@ -56,6 +56,16 @@ export class Point2D {
 		return this.y;
 	}
 
+	public multiply(x: number, y: number): void {
+		this.x *= x;
+		this.y *= y;
+	}
+
+	public scale(scale: number): void {
+		this.x *= scale;
+		this.y *= scale;
+	}
+
 	/**
 	 * Method that sets x-coordinate
 	 */
