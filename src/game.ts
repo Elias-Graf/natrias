@@ -1,11 +1,9 @@
 import { RendererInterface } from './render';
 import { KeyHandlerInterface } from './keyHandler';
 import { Dir, Point2D } from './globals';
-import { DrawableTetromino } from './drawables/drawableTetromino';
-import { getTemplate } from './tetrominoes';
-import { TemplateType } from './tetrominoes/type';
+import { DrawableTetromino, DrawableBlock } from './drawables';
+import { TemplateType } from './tetrominoes';
 import { PhysicsInterface } from './physics';
-import { DrawableBlock } from './drawables/drawableBlock';
 
 export class Natrias {
 	private renderer: RendererInterface;
@@ -65,33 +63,33 @@ export class Natrias {
 	private spawnNextTetromino(): void {
 		const rdm = Math.floor(Math.random() * 6);
 
-		let template: Point2D[] | undefined;
+		let type: TemplateType | undefined = undefined;
 		switch (rdm) {
 			case 0:
-				template = getTemplate(TemplateType.I);
+				type = TemplateType.I;
 				break;
 			case 1:
-				template = getTemplate(TemplateType.L);
+				type = TemplateType.L;
 				break;
 			case 2:
-				template = getTemplate(TemplateType.O);
+				type = TemplateType.O;
 				break;
 			case 3:
-				template = getTemplate(TemplateType.S);
+				type = TemplateType.S;
 				break;
 			case 4:
-				template = getTemplate(TemplateType.T);
+				type = TemplateType.T;
 				break;
 			case 5:
-				template = getTemplate(TemplateType.Z);
+				type = TemplateType.Z;
 				break;
 		}
-		if (template === undefined) {
+		if (type === undefined) {
 			console.error(
 				`[FATAL]: tried to spawn tetromino with index ${rdm}. no matching template was found`
 			);
 		} else {
-			const newActive = new DrawableTetromino(new Point2D(5, 3), template);
+			const newActive = new DrawableTetromino(new Point2D(5, 3), type);
 			this.renderer.registerDrawable(newActive);
 			this.activeTetromino = newActive;
 		}
