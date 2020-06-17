@@ -4,19 +4,34 @@ import { Block } from '../physics/block';
 
 export class DrawableBlock extends DefaultDrawable implements Block {
 	private position: Point2D;
+	private template: Point2D;
 
 	public static SIZE = 50;
-	private static BORDER_OFFSET = 12;
+	public static BORDER_OFFSET = 12;
 
-	public constructor(position: Point2D) {
+	public constructor(position: Point2D, template: Point2D) {
 		super();
 
 		this.position = position;
+		this.template = template;
 	}
 
-	public static render(ctx: CanvasRenderingContext2D, origin: Point2D): void {
-		const x = origin.getX();
-		const y = origin.getY();
+	public getPosition(): Point2D {
+		return this.position;
+	}
+	public getTemplate(): Point2D {
+		return this.template;
+	}
+	public onDelete(): void {
+		const renderer = this.dangerousGetRenderer();
+		if (renderer === null) {
+			console.error('cannot delete block as renderer is not present');
+		} else renderer.unregisterDrawable(this);
+	}
+	public render(ctx: CanvasRenderingContext2D): void {
+		const position = this.position.clone().scale(DrawableBlock.SIZE);
+		const x = position.getX();
+		const y = position.getY();
 		const SIZE = DrawableBlock.SIZE;
 		const BORDER_WIDTH = DrawableBlock.BORDER_OFFSET;
 
@@ -46,23 +61,6 @@ export class DrawableBlock extends DefaultDrawable implements Block {
 		ctx.fill();
 
 		ctx.resetTransform();
-	}
-
-	public getPosition(): Point2D {
-		return this.position;
-	}
-	public onDelete(): void {
-		const renderer = this.dangerousGetRenderer();
-		if (renderer === null) {
-			console.error('cannot delete block as renderer is not present');
-		} else {
-			renderer.unregisterDrawable(this);
-		}
-	}
-	public render(ctx: CanvasRenderingContext2D): void {
-		const p = this.position.clone();
-		p.scale(DrawableBlock.SIZE);
-		DrawableBlock.render(ctx, p);
 	}
 	public setPosition(position: Point2D): void {
 		this.position = position;

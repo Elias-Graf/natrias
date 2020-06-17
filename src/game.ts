@@ -5,12 +5,16 @@ import { DrawableTetromino, DrawableBlock } from './drawables';
 import { TemplateType } from './tetrominoes';
 import { PhysicsInterface } from './physics';
 
-export class Natrias {
-	private renderer: RendererInterface;
-	private physics: PhysicsInterface;
-	private keyHandler: KeyHandlerInterface;
+// TODO: generate UML
 
+export class Natrias {
 	private activeTetromino: DrawableTetromino | undefined;
+	private keyHandler: KeyHandlerInterface;
+	private physics: PhysicsInterface;
+	private renderer: RendererInterface;
+
+	private static readonly FORCE_MOVE_DELAY = 500;
+	private lastForcedMove = Date.now();
 
 	public constructor(
 		renderer: RendererInterface,
@@ -25,7 +29,8 @@ export class Natrias {
 		this.keyHandler.setRotateListener(this.onRotate.bind(this));
 		// Start the renderer
 		this.renderer.start();
-
+		// Start the game loop
+		window.setInterval(this.gameTick.bind(this));
 		this.spawnNextTetromino();
 	}
 	/**
@@ -38,15 +43,15 @@ export class Natrias {
 		} else {
 			const moveResponse = this.physics.move(this.activeTetromino, direction);
 			if (moveResponse.hitBottom) {
+				// Unregister the tetromino as a whole
 				this.renderer.unregisterDrawable(this.activeTetromino);
-				const blocks = this.activeTetromino
-					.calculateAbsoluteBlocks()
-					.map((absoluteBlock) => new DrawableBlock(absoluteBlock));
-
-				blocks.forEach((block) => this.renderer.registerDrawable(block));
+				// Get it's blocks and give those to the physics- and renderer engine
+				const blocks = this.activeTetromino.getBlocks();
 				this.physics.setBlocks(blocks);
-
+				blocks.forEach((block) => this.renderer.registerDrawable(block));
+				// If the tetromino hit the bottom, we bay need to remove some lines
 				this.physics.removeFullLines();
+				// Spawn the next tetromino
 				this.spawnNextTetromino();
 			}
 		}
@@ -59,7 +64,9 @@ export class Natrias {
 			console.warn("couldn't rotate active tetromino, it was undefined");
 		} else this.physics.rotate(this.activeTetromino);
 	}
-
+	/**
+	 * Spawns the next tetromino at the start location
+	 */
 	private spawnNextTetromino(): void {
 		const rdm = Math.floor(Math.random() * 6);
 
@@ -93,5 +100,9 @@ export class Natrias {
 			this.renderer.registerDrawable(newActive);
 			this.activeTetromino = newActive;
 		}
+	}
+
+	private gameTick(): void {
+		const current = Date.now();
 	}
 }

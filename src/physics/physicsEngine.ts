@@ -37,16 +37,6 @@ export class PhysicsEngine implements PhysicsInterface {
 	}
 
 	/**
-	 * Method that creates Tetromino
-	 */
-	// private setTetromino(tetromino: Tetromino): void {
-	// 	tetromino.calculateAbsoluteBlocks().forEach((block) => {
-	// 		this.board[block.getY()][block.getX()] = isActive;
-	// 	});
-	// 	this.drawDebugInterface();
-	// }
-
-	/**
 	 * Method that fills the board according to boolean
 	 */
 	private drawDebugInterface(): void {
@@ -65,16 +55,10 @@ export class PhysicsEngine implements PhysicsInterface {
 	 * Method that rotates the tetromino
 	 */
 	public rotate(tetromino: Tetromino): void {
-		const newTetromino = tetromino.clone();
-		newTetromino.rotate();
+		tetromino.rotate();
 
-		if (!this.outOfBounds(newTetromino) && !this.isColliding(newTetromino)) {
-			// Clear old tetromino
-			// this.setTetromino(tetromino, false);
-			// Sets new rotation
-			tetromino.setRotation(newTetromino.getRotation());
-			// Update tetromino
-			// this.setTetromino(tetromino, true);
+		if (this.outOfBounds(tetromino) || this.isColliding(tetromino)) {
+			tetromino.rotate(-1);
 		}
 	}
 
@@ -93,20 +77,17 @@ export class PhysicsEngine implements PhysicsInterface {
 	 * Method that lets tetromino move
 	 */
 	public move(tetromino: Tetromino, dir: Dir): MoveResponse {
-		const newTetromino = tetromino.clone();
-		const newOrigin = newTetromino.getOrigin();
+		tetromino.move(dir);
 
-		if (dir === Dir.RIGHT) newOrigin.setX(newOrigin.getX() + 1);
-		else if (dir === Dir.DOWN) newOrigin.setY(newOrigin.getY() + 1);
-		else if (dir === Dir.LEFT) newOrigin.setX(newOrigin.getX() - 1);
-		else console.warn(`Unknown direction ${dir}`);
-
-		if (!this.outOfBounds(newTetromino) && !this.isColliding(newTetromino)) {
-			tetromino.getOrigin().assign(newOrigin);
-		} else if (dir === Dir.DOWN) {
-			// // TODO: do cleanup stuff yay
-			return { hitBottom: true };
+		if (this.outOfBounds(tetromino) || this.isColliding(tetromino)) {
+			tetromino.move(Dir.opposite(dir));
+			if (dir === Dir.DOWN) {
+				return {
+					hitBottom: true,
+				};
+			}
 		}
+
 		return { hitBottom: false };
 	}
 
@@ -163,8 +144,8 @@ export class PhysicsEngine implements PhysicsInterface {
 	 * Method that checks collision of tetromino with other blocks when moving
 	 */
 	private isColliding(newTetromino: Tetromino): boolean {
-		this.logBoard(this.board);
-		for (const position of newTetromino.calculateAbsoluteBlocks()) {
+		for (const block of newTetromino.getBlocks()) {
+			const position = block.getPosition();
 			if (this.getBlock(position.getX(), position.getY()) !== null) return true;
 		}
 		return false;
@@ -174,12 +155,13 @@ export class PhysicsEngine implements PhysicsInterface {
 	 * Method that checks if coordinates are out of bounds
 	 */
 	private outOfBounds(tetromino: Tetromino): boolean {
-		for (const block of tetromino.calculateAbsoluteBlocks()) {
+		for (const block of tetromino.getBlocks()) {
+			const position = block.getPosition();
 			if (
-				block.getX() > PhysicsEngine.WIDTH - 1 ||
-				block.getX() < 0 ||
-				block.getY() > PhysicsEngine.HEIGHT - 1 ||
-				block.getY() < 0
+				position.getX() > PhysicsEngine.WIDTH - 1 ||
+				position.getX() < 0 ||
+				position.getY() > PhysicsEngine.HEIGHT - 1 ||
+				position.getY() < 0
 			) {
 				return true;
 			}
