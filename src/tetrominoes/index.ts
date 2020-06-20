@@ -1,3 +1,5 @@
+export { TemplateType } from './type';
+
 import { TemplateType } from './type';
 import { Point2D } from '../globals';
 import { TEMPLATE_I } from './i';
