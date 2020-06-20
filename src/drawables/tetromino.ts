@@ -54,26 +54,25 @@ export class DrawableTetromino extends DefaultDrawable implements Tetromino {
 	}
 	public render(context: CanvasRenderingContext2D): void {
 		this.blocks.forEach((block) => block.render(context));
-		// this.calculateAbsoluteBlocks().forEach((block) => {
-		// 	DrawableBlock.render(
-		// 		context,
-		// 		new Point2D(
-		// 			block.getX() * DrawableBlock.SIZE,
-		// 			block.getY() * DrawableBlock.SIZE
-		// 		)
-		// 	);
-		// });
 	}
 	public rotate(amount = 1): void {
 		// We don't want to rotate the O shape
 		if (this.type !== TemplateType.O) {
 			this.rotation += amount;
-
-			if (this.rotation > 3) this.rotation = 0;
-			if (this.rotation < 0) this.rotation = 3;
+			switch (this.type) {
+				// Some shapes only need two rotations
+				case TemplateType.I:
+				case TemplateType.S:
+				case TemplateType.Z:
+					if (this.rotation > 1) this.rotation = 0;
+					if (this.rotation < 0) this.rotation = 1;
+					break;
+				default:
+					if (this.rotation > 3) this.rotation = 0;
+					if (this.rotation < 0) this.rotation = 3;
+			}
+			this.reassessBlocks();
 		}
-
-		this.reassessBlocks();
 	}
 	public setOrigin(origin: Point2D): void {
 		this.origin = origin;
@@ -99,13 +98,13 @@ export class DrawableTetromino extends DefaultDrawable implements Tetromino {
 				case 0:
 					break;
 				case 1:
-					position.flip().multiply(-1, 1);
+					position.flip().multiply(new Point2D(-1, 1));
 					break;
 				case 2:
 					position.scale(-1);
 					break;
 				case 3:
-					position.flip().multiply(1, -1);
+					position.flip().multiply(new Point2D(1, -1));
 					break;
 				default:
 					console.error(`Rotation not in limit: ${this.getRotation()}`);
