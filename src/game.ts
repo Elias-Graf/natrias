@@ -8,19 +8,17 @@ import { PhysicsInterface } from './physics';
 // TODO: generate UML
 
 export class Natrias {
-	private activeTetromino: DrawableTetromino | undefined;
-	private keyHandler: KeyHandlerInterface;
-	private physics: PhysicsInterface;
-	private renderer: RendererInterface;
-
 	private static readonly FORCE_MOVE_DELTA = 500;
-	private previousForcedMove = Date.now();
 
-	private deletedLines = 0;
-	private displayScore: HTMLElement;
+	private activeTetromino: DrawableTetromino | undefined;
 	private displayLevel: HTMLElement;
+	private displayScore: HTMLElement;
+	private keyHandler: KeyHandlerInterface;
 	private level = 1;
 	private levelUpLines = 7;
+	private physics: PhysicsInterface;
+	private previousForcedMove = Date.now();
+	private renderer: RendererInterface;
 	private score = 0;
 
 	public constructor(
@@ -135,7 +133,6 @@ export class Natrias {
 	 */
 	private updateScore(lineCount: number): void {
 		// Increase counters
-		this.deletedLines += lineCount;
 		this.levelUpLines += lineCount;
 		// Update level
 		if (this.levelUpLines >= 8) {
@@ -145,6 +142,8 @@ export class Natrias {
 		// Assigning points according to deleted lines
 		let points = 0;
 		switch (lineCount) {
+			case 0:
+				break;
 			case 1:
 				points = 40;
 				break;
@@ -159,7 +158,7 @@ export class Natrias {
 				break;
 			default:
 				console.error(
-					'Score could not update, deleted lines are more than four.'
+					`Score could not be updated, deleted lines are not in range. It was "${lineCount}"`
 				);
 		}
 		// Update score according to level
