@@ -1,9 +1,9 @@
 import { RendererInterface } from './render';
 import { KeyHandlerInterface } from './keyHandler';
 import { Dir, Point2D } from './globals';
-import { DrawableTetromino, DrawableBlock } from './drawables';
+import { DrawableTetromino } from './drawables';
 import { TemplateType } from './tetrominoes';
-import { PhysicsInterface, PhysicsEngine, MoveResponse } from './physics';
+import { PhysicsInterface } from './physics';
 
 // TODO: generate UML
 
@@ -34,27 +34,22 @@ export class Natrias {
 		// Set the key handler callbacks
 		this.keyHandler.setMoveListener(this.onMove.bind(this));
 		this.keyHandler.setRotateListener(this.onRotate.bind(this));
+		// Get the score displays
+		// Setup the score displays
+		const divScore = document.getElementById('score');
+		const divLevel = document.getElementById('level');
+		if (divScore === null) throw new Error('Could not get score HTML-Element');
+		if (divLevel === null) throw new Error('Could not get level HTML-Element');
+		this.displayScore = divScore;
+		this.displayLevel = divLevel;
+		// Display the initial score
+		this.updateScore(0);
 		// Start the renderer
 		this.renderer.start();
 		// Start the game loop
 		window.setInterval(this.gameTick.bind(this), 10);
+		// Spawn the first tetromino
 		this.spawnNextTetromino();
-		// Display the score
-		const divScore = document.getElementById('score');
-		if (divScore === null) {
-			console.error('Could not display score, element is null.');
-		} else {
-			this.displayScore = divScore;
-			this.displayScore.innerText = this.score.toString();
-		}
-		// Display the level
-		const divLevel = document.getElementById('level');
-		if (divLevel === null) {
-			console.error('Could not display score, element is null.');
-		} else {
-			this.displayLevel = divLevel;
-			this.displayLevel.innerText = this.level.toString();
-		}
 	}
 	/**
 	 * Is called every 10ms when the game loop is active
@@ -139,7 +134,7 @@ export class Natrias {
 	 * Is called when tetromino hits bottom in case lines got deleted
 	 */
 	private updateScore(lineCount: number): void {
-		// Update variables
+		// Increase counters
 		this.deletedLines += lineCount;
 		this.levelUpLines += lineCount;
 		// Update level
@@ -147,7 +142,7 @@ export class Natrias {
 			this.level++;
 			this.levelUpLines = 0;
 		}
-		// Assining points according to deleted lines
+		// Assigning points according to deleted lines
 		let points = 0;
 		switch (lineCount) {
 			case 1:
