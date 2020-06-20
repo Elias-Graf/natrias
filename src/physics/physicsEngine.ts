@@ -120,7 +120,7 @@ export class PhysicsEngine implements PhysicsInterface {
 					const block = this.getBlock(x, y);
 					if (block !== null) {
 						const position = block.getPosition();
-						position.setY(y + 1);
+						position.setY(y + count);
 						// Move the block
 						this.setBlock(position.getX(), position.getY(), block);
 						// Clear the old location
