@@ -3,7 +3,7 @@ import { KeyHandlerInterface } from './keyHandler';
 import { Dir, Point2D } from './globals';
 import { DrawableTetromino, DrawableBlock } from './drawables';
 import { TemplateType } from './tetrominoes';
-import { PhysicsInterface } from './physics';
+import { PhysicsInterface, PhysicsEngine, MoveResponse } from './physics';
 
 // TODO: generate UML
 
@@ -13,8 +13,15 @@ export class Natrias {
 	private physics: PhysicsInterface;
 	private renderer: RendererInterface;
 
-	private static readonly FORCE_MOVE_DELAY = 500;
-	private lastForcedMove = Date.now();
+	private static readonly FORCE_MOVE_DELTA = 500;
+	private previousForcedMove = Date.now();
+
+	private deletedLines = 0;
+	private displayScore: HTMLElement;
+	private displayLevel: HTMLElement;
+	private level = 1;
+	private levelUpLines = 7;
+	private score = 0;
 
 	public constructor(
 		renderer: RendererInterface,
@@ -30,8 +37,35 @@ export class Natrias {
 		// Start the renderer
 		this.renderer.start();
 		// Start the game loop
-		window.setInterval(this.gameTick.bind(this));
+		window.setInterval(this.gameTick.bind(this), 10);
 		this.spawnNextTetromino();
+		// Display the score
+		const divScore = document.getElementById('score');
+		if (divScore === null) {
+			console.error('Could not display score, element is null.');
+		} else {
+			this.displayScore = divScore;
+			this.displayScore.innerText = this.score.toString();
+		}
+		// Display the level
+		const divLevel = document.getElementById('level');
+		if (divLevel === null) {
+			console.error('Could not display score, element is null.');
+		} else {
+			this.displayLevel = divLevel;
+			this.displayLevel.innerText = this.level.toString();
+		}
+	}
+	/**
+	 * Is called every 10ms when the game loop is active
+	 */
+	private gameTick(): void {
+		const current = Date.now();
+		// Subtracts previous saved time with current time and compares it to time limit
+		if (current - this.previousForcedMove >= Natrias.FORCE_MOVE_DELTA) {
+			this.onMove(Dir.DOWN);
+			this.previousForcedMove = current;
+		}
 	}
 	/**
 	 * Is called when the key handler reports a move (in a direction)
@@ -49,8 +83,8 @@ export class Natrias {
 				const blocks = this.activeTetromino.getBlocks();
 				this.physics.setBlocks(blocks);
 				blocks.forEach((block) => this.renderer.registerDrawable(block));
-				// If the tetromino hit the bottom, we bay need to remove some lines
-				this.physics.removeFullLines();
+				// If the tetromino hit the bottom, we may need to remove some lines
+				this.updateScore(this.physics.removeFullLines());
 				// Spawn the next tetromino
 				this.spawnNextTetromino();
 			}
@@ -101,8 +135,41 @@ export class Natrias {
 			this.activeTetromino = newActive;
 		}
 	}
-
-	private gameTick(): void {
-		const current = Date.now();
+	/**
+	 * Is called when tetromino hits bottom in case lines got deleted
+	 */
+	private updateScore(lineCount: number): void {
+		// Update variables
+		this.deletedLines += lineCount;
+		this.levelUpLines += lineCount;
+		// Update level
+		if (this.levelUpLines >= 8) {
+			this.level++;
+			this.levelUpLines = 0;
+		}
+		// Assining points according to deleted lines
+		let points = 0;
+		switch (lineCount) {
+			case 1:
+				points = 40;
+				break;
+			case 2:
+				points = 100;
+				break;
+			case 3:
+				points = 300;
+				break;
+			case 4:
+				points = 1200;
+				break;
+			default:
+				console.error(
+					'Score could not update, deleted lines are more than four.'
+				);
+		}
+		// Update score according to level
+		this.score += points * this.level;
+		this.displayScore.innerText = this.score.toString();
+		this.displayLevel.innerText = this.level.toString();
 	}
 }
