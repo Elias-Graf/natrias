@@ -9,7 +9,7 @@ export class KeyHandler implements KeyHandlerInterface {
 		// Bind method to the class "this"
 		this.onKeyPress = this.onKeyPress.bind(this);
 		// Register the document key press listener
-		document.addEventListener('keyup', this.onKeyPress);
+		document.addEventListener('keydown', this.onKeyPress);
 	}
 	/**
 	 * Sets the "move" callback
