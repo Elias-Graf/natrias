@@ -5,6 +5,10 @@ import { Drawable } from './drawable';
  */
 export interface RendererInterface {
 	/**
+	 * Register a drawable.
+	 */
+	registerDrawable: (drawable: Drawable) => void;
+	/**
 	 * Start the renderer
 	 */
 	start: () => void;
@@ -12,10 +16,6 @@ export interface RendererInterface {
 	 * Stop the renderer
 	 */
 	stop: () => void;
-	/**
-	 * Register a drawable.
-	 */
-	registerDrawable: (drawable: Drawable) => void;
 	/**
 	 * Unregister a drawable
 	 */
