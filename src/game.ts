@@ -1,7 +1,7 @@
 import { RendererInterface } from './render';
 import { KeyHandlerInterface } from './keyHandler';
 import { Dir, Point2D } from './globals';
-import { DrawableTetromino } from './drawables';
+import { DrawableTetromino, DrawableBlock } from './drawables';
 import { TemplateType } from './tetrominoes';
 import { PhysicsInterface } from './physics';
 
@@ -20,6 +20,7 @@ export class Natrias {
 	private previousForcedMove = Date.now();
 	private renderer: RendererInterface;
 	private score = 0;
+	private gameTickIntervalId = -1;
 
 	public constructor(
 		renderer: RendererInterface,
@@ -45,10 +46,19 @@ export class Natrias {
 		// Start the renderer
 		this.renderer.start();
 		// Start the game loop
-		window.setInterval(this.gameTick.bind(this), 10);
+		this.startGameTicks();
 		// Spawn the first tetromino
 		this.spawnNextTetromino();
 	}
+
+	private stopGameTicks(): void {
+		window.clearInterval(this.gameTickIntervalId);
+	}
+
+	private startGameTicks(): void {
+		this.gameTickIntervalId = window.setInterval(this.gameTick.bind(this), 10);
+	}
+
 	/**
 	 * Is called every 10ms when the game loop is active
 	 */
@@ -123,7 +133,7 @@ export class Natrias {
 				`[FATAL]: tried to spawn tetromino with index ${rdm}. no matching template was found`
 			);
 		} else {
-			const newActive = new DrawableTetromino(new Point2D(5, 3), type);
+			const newActive = new DrawableTetromino(new Point2D(5, -4), type);
 			this.renderer.registerDrawable(newActive);
 			this.activeTetromino = newActive;
 		}

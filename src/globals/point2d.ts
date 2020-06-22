@@ -117,6 +117,12 @@ export class Point2D {
 
 		return this;
 	}
+
+	public subtract(point: Point2D): Point2D {
+		this.x -= point.getX();
+		this.y -= point.getY();
+		return this;
+	}
 	/**
 	 * Calls the static toString method.
 	 * @see Point2D.toString
