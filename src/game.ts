@@ -13,7 +13,7 @@ export class Natrias {
 	private physics: PhysicsInterface;
 	private renderer: RendererInterface;
 
-	private static readonly FORCE_MOVE_DELTA = 500;
+	private static FORCE_MOVE_DELTA = 500;
 	private previousForcedMove = Date.now();
 
 	private deletedLines = 0;
@@ -137,14 +137,9 @@ export class Natrias {
 		// Increase counters
 		this.deletedLines += lineCount;
 		this.levelUpLines += lineCount;
-		// Update level
-		if (this.levelUpLines >= 8) {
-			this.level++;
-			this.levelUpLines = 0;
-		}
 		// Assigning points according to deleted lines
 		let points = 0;
-		switch (lineCount) {
+		switch (this.deletedLines) {
 			case 1:
 				points = 40;
 				break;
@@ -162,8 +157,19 @@ export class Natrias {
 					'Score could not update, deleted lines are more than four.'
 				);
 		}
+		// Set current deleted lines to 0
+		this.deletedLines = 0;
 		// Update score according to level
-		this.score += points * this.level;
+		this.score += (points * this.level);
+		// Update level and increase speed
+		if (this.levelUpLines >= 8) {
+			this.level++;
+			if(Natrias.FORCE_MOVE_DELTA > 100) {
+				Natrias.FORCE_MOVE_DELTA -=50;
+			}
+			this.levelUpLines = 0;
+		}
+		// Display new score and level
 		this.displayScore.innerText = this.score.toString();
 		this.displayLevel.innerText = this.level.toString();
 	}
