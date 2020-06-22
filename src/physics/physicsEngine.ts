@@ -16,7 +16,7 @@ export class PhysicsEngine implements PhysicsInterface {
 	private board: (Block | null)[][] = [];
 	private static readonly WIDTH = 10;
 	private static readonly HEIGHT = 20;
-	private debugBoard = document.createElement('div');
+
 	/**
 	 * Constructor of the PhysicsEngine class
 	 */
@@ -27,30 +27,6 @@ export class PhysicsEngine implements PhysicsInterface {
 			for (let x = 0; x < 10; x++) this.board[y][x] = null;
 		}
 	}
-
-	/**
-	 * Method that creates GameBoard
-	 */
-	private showDebugInterface(): void {
-		document.body.appendChild(this.debugBoard);
-		this.drawDebugInterface();
-	}
-
-	/**
-	 * Method that fills the board according to boolean
-	 */
-	private drawDebugInterface(): void {
-		while (this.debugBoard.firstChild)
-			this.debugBoard.removeChild(this.debugBoard.firstChild);
-		for (let y = 0; y < PhysicsEngine.HEIGHT; y++) {
-			for (let x = 0; x < PhysicsEngine.WIDTH; x++) {
-				if (this.board[y][x]) this.debugBoard.innerHTML += '&#9632';
-				else this.debugBoard.innerHTML += '&#9633';
-			}
-			this.debugBoard.append(document.createElement('br'));
-		}
-	}
-
 	/**
 	 * Method that rotates the tetromino
 	 */
@@ -61,18 +37,19 @@ export class PhysicsEngine implements PhysicsInterface {
 			tetromino.rotate(-1);
 		}
 	}
-
-	private logBoard(board: (Block | null)[][]): void {
+	/**
+	 * Print the current board to the console
+	 */
+	public logBoard(): void {
 		let str = '';
 		for (let y = 0; y < 20; y++) {
 			for (let x = 0; x < 10; x++) {
-				str += board[y][x] !== null ? '■' : '□';
+				str += this.getBlock(x, y) !== null ? '■' : '□';
 			}
 			str += '\n';
 		}
 		console.log(str);
 	}
-
 	/**
 	 * Method that lets tetromino move
 	 */
@@ -90,7 +67,6 @@ export class PhysicsEngine implements PhysicsInterface {
 
 		return { hitBottom: false };
 	}
-
 	public removeFullLines(): number {
 		let count = 0;
 		let startingLine = -1;
@@ -132,14 +108,12 @@ export class PhysicsEngine implements PhysicsInterface {
 
 		return count;
 	}
-
 	public setBlocks(blocks: Block[]): void {
 		blocks.forEach((block) => {
 			const position = block.getPosition();
 			this.setBlock(position.getX(), position.getY(), block);
 		});
 	}
-
 	/**
 	 * Method that checks collision of tetromino with other blocks when moving
 	 */
@@ -150,7 +124,6 @@ export class PhysicsEngine implements PhysicsInterface {
 		}
 		return false;
 	}
-
 	/**
 	 * Method that checks if coordinates are out of bounds
 	 */
@@ -168,19 +141,16 @@ export class PhysicsEngine implements PhysicsInterface {
 		}
 		return false;
 	}
-
 	private setBlock(x: number, y: number, block: Block | null): void {
 		if (block) block.getPosition().setXY(x, y);
 		this.board[y][x] = block;
 	}
-
 	private getBlock(x: number, y: number): Block | null {
 		if (!this.isInBound(x, y)) {
 			console.warn(`Position (${x}, ${y}) is out of bounds`);
 		} else return this.board[y][x];
 		return null;
 	}
-
 	private isInBound(x: number, y: number): boolean {
 		return (
 			x >= 0 && x < PhysicsEngine.WIDTH && y >= 0 && y < PhysicsEngine.HEIGHT
