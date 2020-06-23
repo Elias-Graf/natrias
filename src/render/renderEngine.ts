@@ -110,7 +110,7 @@ export class RenderEngine {
 		// Increase FPS
 		this.FPSCurrent++;
 		// Clear the previous frame
-		this.temp_background('orange');
+		this.temp_background('black');
 		// Render all registered drawables
 		this.drawables.forEach((_) => _.render(this.canvasContext));
 	}

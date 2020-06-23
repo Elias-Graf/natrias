@@ -8,7 +8,6 @@ import { PhysicsEngine } from './physics';
 
 export class Natrias {
 	private readonly BLOCK_SIZE = 50;
-	private readonly FORCE_MOVE_DELTA = 750;
 	private readonly HEIGHT = 20;
 	private readonly WIDTH = 10;
 	private readonly Y_OFFSET = 5;
@@ -17,10 +16,11 @@ export class Natrias {
 	private activeTetrominoProjection: DrawableTetromino | null = null;
 	private deletedLevelLines = 0;
 	private deletedLines = 0;
+	private forceMoveDelta = 750;
+	private gameTickInterval: number | null = null;
+	private isPaused = false;
 	private level = 1;
 	private levelDisplay: HTMLElement;
-	private isPaused = false;
-	private gameTickInterval: number | null = null;
 	private physics = new PhysicsEngine(this.WIDTH, this.HEIGHT, this.Y_OFFSET);
 	private previousForceMove = Date.now();
 	private renderer = new RenderEngine(
@@ -79,7 +79,7 @@ export class Natrias {
 		const current = Date.now();
 		// Check if our force move delta elapsed, if yes, move the tetromino
 		// down by one
-		if (current - this.previousForceMove > this.FORCE_MOVE_DELTA) {
+		if (current - this.previousForceMove > this.forceMoveDelta) {
 			this.moveActiveTetromino(Dir.DOWN);
 			this.previousForceMove = current;
 		}
@@ -248,15 +248,6 @@ export class Natrias {
 		// Increase counters
 		this.deletedLevelLines += deletedLines;
 		this.deletedLines += deletedLines;
-		// Check if we need to increase the level
-		if (this.deletedLevelLines >= 8) {
-			this.level++;
-			// FIXME: if the score was 7 and the player removed 4 lines,
-			// the level is currently only increased and the deleted lines
-			// set back to 0. Maybe we want to set the deleted lines
-			// to deleted lines % MAX_LINES to account for the overshoot.
-			this.deletedLevelLines = 0;
-		}
 		// Increase the score
 		let additionalScore = 0;
 		switch (deletedLines) {
@@ -280,10 +271,18 @@ export class Natrias {
 						`\ndeleted lines were ${deletedLines}`
 				);
 		}
-		// Score is multiplied by the level the player is on
+		// Update score according to level
 		this.score += additionalScore * this.level;
-		// Update the score displays
-		this.levelDisplay.innerText = this.score.toString();
-		this.scoreDisplay.innerText = this.level.toString();
+		// Update level and increase speed
+		if (this.deletedLevelLines >= 8) {
+			this.level++;
+			if (this.forceMoveDelta > 100) {
+				this.forceMoveDelta -= 50;
+			}
+			this.deletedLevelLines = this.deletedLevelLines - 8;
+		}
+		// Display new score and level
+		this.scoreDisplay.innerText = this.score.toString();
+		this.levelDisplay.innerText = this.level.toString();
 	}
 }

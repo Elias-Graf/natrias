@@ -3,14 +3,35 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
+	<title>Natrias</title>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Orbitron:wght@500;700&display=swap" rel="stylesheet"> 
+	<style>
+		.wrapper {
+			width: 500px;
+			background-color: black;
+			color: white;
+			margin-bottom: 20px;
+			font-family: 'Orbitron', sans-serif;
+		}
+		.top {
+			padding: 5px;
+		}
+		#score, #level {
+			margin-left: 20px;
+			display: inline;
+		}
+	</style>
 </head>
 <body>
-	<div>
-		Score: 
-		<div id="score"></div>
-		Level:
-		<div id="level"></div>
+	<div class="wrapper">
+		<div class="top">
+			Level:
+			<div id="level"></div>
+		</div>
+		<div class="top">
+			Score: 
+			<div id="score"></div>
+		</div>
 	</div>
 	<script src="./build/bundle.js"></script>
 </body>
