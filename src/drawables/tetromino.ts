@@ -8,28 +8,56 @@ import { DefaultDrawable } from '../render/defaultDrawable';
 // TODO: blocks as children (not template)
 
 export class DrawableTetromino extends DefaultDrawable implements Tetromino {
-	private blocks: DrawableBlock[];
+	private blocks: DrawableBlock[] = [];
 	private origin: Point2D;
+	private template: Point2D[];
 	private rotation = 0;
 	private type: TemplateType;
+	private colors: { dark: string; light: string; normal: string } = {
+		dark: 'darkred',
+		light: 'tomato',
+		normal: 'red',
+	};
 
 	public constructor(origin: Point2D, type: TemplateType) {
 		super();
 
-		this.blocks = getTemplate(type).map(
-			(template) => new DrawableBlock(template.clone(), template.clone())
-		);
+		this.template = getTemplate(type);
 		this.origin = origin;
 		this.type = type;
 
-		this.reassessBlocks();
+		// This not just sets the type, but also generates the blocks
+		this.setType(type);
 	}
-	public clone(): Tetromino {
-		throw new Error('clone should not be called');
-		const clone = new DrawableTetromino(this.origin.clone(), this.type);
-		// We need to clone additional properties
-		clone.setRotation(this.rotation);
-		return clone;
+
+	public setColors(colors: {
+		dark: string;
+		light: string;
+		normal: string;
+	}): void {
+		this.colors = colors;
+		this.blocks.forEach((block) => block.setColors(colors));
+	}
+
+	public assign(tetromino: Tetromino): void {
+		console.warn('this function should not be used');
+		this.origin.assign(tetromino.getOrigin());
+		this.rotation = tetromino.getRotation();
+		this.type = tetromino.getType();
+		this.blocks = getTemplate(this.type).map((template) => {
+			const drawableBlock = new DrawableBlock(
+				template.clone(),
+				template.clone()
+			);
+			drawableBlock.setColors(this.colors);
+			return drawableBlock;
+		});
+	}
+	public clone(): DrawableTetromino {
+		console.warn('this function should not be used');
+		const tetromino = new DrawableTetromino(this.origin.clone(), this.type);
+		tetromino.setRotation(this.rotation);
+		return tetromino;
 	}
 	public getBlocks(): DrawableBlock[] {
 		return this.blocks;
@@ -80,6 +108,15 @@ export class DrawableTetromino extends DefaultDrawable implements Tetromino {
 	}
 	public setRotation(rotation: number): void {
 		this.rotation = rotation;
+		this.reassessBlocks();
+	}
+	public setType(type: TemplateType): void {
+		this.type = type;
+		this.blocks = getTemplate(type).map((position) => {
+			const block = new DrawableBlock(position.clone(), position.clone());
+			block.setColors(this.colors);
+			return block;
+		});
 		this.reassessBlocks();
 	}
 	/**

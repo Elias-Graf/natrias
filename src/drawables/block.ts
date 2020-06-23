@@ -5,6 +5,11 @@ import { Block } from '../physics/block';
 export class DrawableBlock extends DefaultDrawable implements Block {
 	private position: Point2D;
 	private template: Point2D;
+	private colors: { dark: string; light: string; normal: string } = {
+		dark: 'darkred',
+		light: 'tomato',
+		normal: 'red',
+	};
 
 	public static SIZE = 50;
 	public static BORDER_OFFSET = 12;
@@ -16,6 +21,13 @@ export class DrawableBlock extends DefaultDrawable implements Block {
 		this.template = template;
 	}
 
+	public setColors(colors: {
+		dark: string;
+		light: string;
+		normal: string;
+	}): void {
+		this.colors = colors;
+	}
 	public getPosition(): Point2D {
 		return this.position;
 	}
@@ -37,7 +49,7 @@ export class DrawableBlock extends DefaultDrawable implements Block {
 
 		ctx.translate(x, y);
 
-		ctx.fillStyle = 'red';
+		ctx.fillStyle = this.colors.normal;
 		ctx.fillRect(0, 0, SIZE, SIZE);
 
 		ctx.beginPath();
@@ -47,7 +59,7 @@ export class DrawableBlock extends DefaultDrawable implements Block {
 		ctx.lineTo(SIZE - BORDER_WIDTH, SIZE - BORDER_WIDTH);
 		ctx.lineTo(SIZE - BORDER_WIDTH, BORDER_WIDTH);
 		ctx.lineTo(BORDER_WIDTH, BORDER_WIDTH);
-		ctx.fillStyle = 'tomato';
+		ctx.fillStyle = this.colors.light;
 		ctx.fill();
 
 		ctx.beginPath();
@@ -57,7 +69,7 @@ export class DrawableBlock extends DefaultDrawable implements Block {
 		ctx.lineTo(SIZE - BORDER_WIDTH, SIZE - BORDER_WIDTH);
 		ctx.lineTo(BORDER_WIDTH, SIZE - BORDER_WIDTH);
 		ctx.lineTo(BORDER_WIDTH, BORDER_WIDTH);
-		ctx.fillStyle = 'darkred';
+		ctx.fillStyle = this.colors.dark;
 		ctx.fill();
 
 		ctx.resetTransform();
