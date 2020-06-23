@@ -1,114 +1,187 @@
-import { RendererInterface } from './render';
-import { KeyHandlerInterface } from './keyHandler';
+import { RenderEngine } from './render';
 import { Dir, Point2D } from './globals';
-import { DrawableTetromino, DrawableBlock } from './drawables';
+import { DrawableTetromino } from './drawables';
 import { TemplateType } from './tetrominoes';
-import { PhysicsInterface } from './physics';
+import { PhysicsEngine } from './physics';
 
 // TODO: generate UML
 
 export class Natrias {
-	private static readonly FORCE_MOVE_DELTA = 500;
+	private readonly BLOCK_SIZE = 50;
+	private readonly FORCE_MOVE_DELTA = 750;
+	private readonly HEIGHT = 20;
+	private readonly WIDTH = 10;
+	private readonly Y_OFFSET = 5;
 
-	private activeTetromino: DrawableTetromino | undefined;
-	private displayLevel: HTMLElement;
-	private displayScore: HTMLElement;
-	private keyHandler: KeyHandlerInterface;
+	private activeTetromino: DrawableTetromino | null = null;
+	private activeTetrominoProjection: DrawableTetromino | null = null;
+	private deletedLevelLines = 0;
+	private deletedLines = 0;
 	private level = 1;
-	private levelUpLines = 7;
-	private physics: PhysicsInterface;
-	private previousForcedMove = Date.now();
-	private renderer: RendererInterface;
+	private levelDisplay: HTMLElement;
+	private isPaused = false;
+	private gameTickInterval: number | null = null;
+	private physics = new PhysicsEngine(this.WIDTH, this.HEIGHT, this.Y_OFFSET);
+	private previousForceMove = Date.now();
+	private renderer = new RenderEngine(
+		document.body,
+		this.WIDTH * this.BLOCK_SIZE,
+		this.HEIGHT * this.BLOCK_SIZE
+	);
 	private score = 0;
-	private gameTickIntervalId = -1;
+	private scoreDisplay: HTMLElement;
 
-	public constructor(
-		renderer: RendererInterface,
-		physics: PhysicsInterface,
-		keyHandler: KeyHandlerInterface
-	) {
-		this.renderer = renderer;
-		this.physics = physics;
-		this.keyHandler = keyHandler;
-		// Set the key handler callbacks
-		this.keyHandler.setMoveListener(this.onMove.bind(this));
-		this.keyHandler.setRotateListener(this.onRotate.bind(this));
-		// Get the score displays
-		// Setup the score displays
-		const divScore = document.getElementById('score');
-		const divLevel = document.getElementById('level');
-		if (divScore === null) throw new Error('Could not get score HTML-Element');
-		if (divLevel === null) throw new Error('Could not get level HTML-Element');
-		this.displayScore = divScore;
-		this.displayLevel = divLevel;
-		// Display the initial score
-		this.updateScore(0);
+	public constructor() {
+		// Get the score and level display elements
+		const LEVEL_DISPLAY = document.getElementById('score');
+		const SCORE_DISPLAY = document.getElementById('level');
+		if (LEVEL_DISPLAY === null)
+			throw new Error('could not find level display HTML element');
+		if (SCORE_DISPLAY === null)
+			throw new Error('could not find score display HTML element');
+		this.levelDisplay = LEVEL_DISPLAY;
+		this.scoreDisplay = SCORE_DISPLAY;
+		// Add the keyboard listener
+		document.addEventListener('keydown', this.onKeyPress.bind(this));
 		// Start the renderer
 		this.renderer.start();
-		// Start the game loop
-		this.startGameTicks();
 		// Spawn the first tetromino
 		this.spawnNextTetromino();
-	}
-
-	private stopGameTicks(): void {
-		window.clearInterval(this.gameTickIntervalId);
-	}
-
-	private startGameTicks(): void {
-		this.gameTickIntervalId = window.setInterval(this.gameTick.bind(this), 10);
+		// Initially display the score by "updating" it
+		this.updateScore(0);
+		// "Resume" - start the game
+		this.resume();
 	}
 
 	/**
-	 * Is called every 10ms when the game loop is active
+	 * Start / resume the game
 	 */
-	private gameTick(): void {
-		const current = Date.now();
-		// Subtracts previous saved time with current time and compares it to time limit
-		if (current - this.previousForcedMove >= Natrias.FORCE_MOVE_DELTA) {
-			this.onMove(Dir.DOWN);
-			this.previousForcedMove = current;
+	private resume(): void {
+		this.gameTickInterval = window.setInterval(this.gameTick.bind(this), 10);
+		this.isPaused = false;
+	}
+	/**
+	 * Pause the game
+	 */
+	private pause(): void {
+		if (this.gameTickInterval === null) {
+			console.warn(`Tried to pause game but not game tick interval was found`);
+		} else {
+			window.clearInterval(this.gameTickInterval);
+			this.isPaused = true;
 		}
 	}
 	/**
-	 * Is called when the key handler reports a move (in a direction)
-	 * @param direction which direction was requested
+	 * Handles stuff that should happen in the game. For example it checks
+	 * if the tetromino should be forcibly moved down
 	 */
-	private onMove(direction: Dir): void {
-		if (this.activeTetromino === undefined) {
-			console.warn("couldn't move active tetromino, is was undefined");
-		} else {
-			const moveResponse = this.physics.move(this.activeTetromino, direction);
-			if (moveResponse.hitBottom) {
-				// Unregister the tetromino as a whole
-				this.renderer.unregisterDrawable(this.activeTetromino);
-				// Get it's blocks and give those to the physics- and renderer engine
-				const blocks = this.activeTetromino.getBlocks();
-				this.physics.setBlocks(blocks);
-				blocks.forEach((block) => this.renderer.registerDrawable(block));
-				// If the tetromino hit the bottom, we may need to remove some lines
-				this.updateScore(this.physics.removeFullLines());
-				// Spawn the next tetromino
-				this.spawnNextTetromino();
+	private gameTick(): void {
+		const current = Date.now();
+		// Check if our force move delta elapsed, if yes, move the tetromino
+		// down by one
+		if (current - this.previousForceMove > this.FORCE_MOVE_DELTA) {
+			this.moveActiveTetromino(Dir.DOWN);
+			this.previousForceMove = current;
+		}
+	}
+	/**
+	 * Move the active tetromino in a direction
+	 * @param direction desired direction
+	 */
+	private moveActiveTetromino(direction: Dir): void {
+		if (!this.isPaused) {
+			if (this.activeTetromino === null) {
+				console.warn('could not move active tetromino, it is null');
+			} else {
+				const { hitBottom, removedLines } = this.physics.move(
+					this.activeTetromino,
+					direction
+				);
+				if (hitBottom) {
+					// Unregister the tetromino as a whole
+					this.renderer.unregisterDrawable(this.activeTetromino);
+					// Get it's blocks and give those to the physics- and renderer engine
+					const blocks = this.activeTetromino.getBlocks();
+					this.physics.addBlocks(blocks);
+					blocks.forEach((block) => this.renderer.registerDrawable(block));
+					// Spawn the next tetromino
+					this.spawnNextTetromino();
+
+					// IF we have removed lines, we need to update the score
+					if (removedLines !== 0) this.updateScore(removedLines);
+				}
+
+				this.updateProjection();
 			}
 		}
 	}
 	/**
-	 * Is called when the key handler reports a rotation
+	 * Rotate the active tetromino
 	 */
-	private onRotate(): void {
-		if (this.activeTetromino === undefined) {
-			console.warn("couldn't rotate active tetromino, it was undefined");
-		} else this.physics.rotate(this.activeTetromino);
+	private rotateActiveTetromino(): void {
+		if (!this.isPaused) {
+			if (this.activeTetromino === null) {
+				console.warn('could not rotate active tetromino, it it null');
+			} else {
+				this.physics.rotate(this.activeTetromino);
+
+				this.updateProjection();
+			}
+		}
 	}
 	/**
-	 * Spawns the next tetromino at the start location
+	 * Is called by the event listener "onKeyDown"
+	 * @param event event given by the event listener
+	 */
+	private onKeyPress(event: KeyboardEvent): void {
+		switch (event.key) {
+			/**
+			 * Directional control (moving)
+			 */
+			case 'ArrowLeft':
+				this.moveActiveTetromino(Dir.LEFT);
+				break;
+			case 'ArrowDown':
+				this.moveActiveTetromino(Dir.DOWN);
+				break;
+			case 'ArrowRight':
+				this.moveActiveTetromino(Dir.RIGHT);
+				break;
+			/**
+			 * Rotating
+			 */
+			case 'ArrowUp':
+				this.rotateActiveTetromino();
+				break;
+			/**
+			 * Other
+			 */
+			case 'Enter':
+				if (this.activeTetromino === null) {
+					console.warn(
+						'could not project active tetromino to bottom, it was null'
+					);
+				} else {
+					// Project the tetromino to the bottom of the screen
+					this.physics.projectToBottom(this.activeTetromino);
+					// Move it down once more to trigger the detection
+					this.moveActiveTetromino(Dir.DOWN);
+				}
+				break;
+			case 'Escape':
+				if (this.isPaused) this.resume();
+				else this.pause();
+				break;
+		}
+	}
+	/**
+	 * Spawns the next tetromino. Tetrominoes are selected randomly.
 	 */
 	private spawnNextTetromino(): void {
-		const rdm = Math.floor(Math.random() * 6);
+		const num = Math.floor(Math.random() * 6);
 
-		let type: TemplateType | undefined = undefined;
-		switch (rdm) {
+		let type: TemplateType | null = null;
+		switch (num) {
 			case 0:
 				type = TemplateType.I;
 				break;
@@ -128,52 +201,89 @@ export class Natrias {
 				type = TemplateType.Z;
 				break;
 		}
-		if (type === undefined) {
-			console.error(
-				`[FATAL]: tried to spawn tetromino with index ${rdm}. no matching template was found`
+		if (type === null) {
+			throw new Error(
+				`Tried to spawn next tetromino but random number was out of range. It was "${num}"`
 			);
+		}
+		this.activeTetromino = new DrawableTetromino(new Point2D(5, -3), type);
+		this.renderer.registerDrawable(this.activeTetromino);
+
+		// If we don't have a projection already, create it
+		if (this.activeTetrominoProjection === null) {
+			this.activeTetrominoProjection = new DrawableTetromino(
+				new Point2D(5, -3),
+				type
+			);
+			this.activeTetrominoProjection.setColors({
+				dark: '#00000032',
+				light: '#FFFFFF32',
+				normal: '#7F7F7F32',
+			});
+			this.renderer.registerDrawable(this.activeTetrominoProjection);
 		} else {
-			const newActive = new DrawableTetromino(new Point2D(5, -4), type);
-			this.renderer.registerDrawable(newActive);
-			this.activeTetromino = newActive;
+			// If we already have one, just update it's type
+			this.activeTetrominoProjection.setType(type);
+		}
+		// Update the position of the projection
+		this.updateProjection();
+	}
+	/**
+	 * Update the projection of the active tetromino (that tetromino of the bottom of the
+	 * screen which indicates where the tetromino will land)
+	 */
+	private updateProjection(): void {
+		const { activeTetromino, activeTetrominoProjection } = this;
+		if (activeTetromino !== null && activeTetrominoProjection !== null) {
+			activeTetrominoProjection.setOrigin(activeTetromino.getOrigin().clone());
+			activeTetrominoProjection.setRotation(activeTetromino.getRotation());
+			this.physics.projectToBottom(activeTetrominoProjection);
 		}
 	}
 	/**
-	 * Is called when tetromino hits bottom in case lines got deleted
+	 * Update the score and the displays corresponding to it
+	 * @param deletedLines number of lines which were removed
 	 */
-	private updateScore(lineCount: number): void {
+	private updateScore(deletedLines: number): void {
 		// Increase counters
-		this.levelUpLines += lineCount;
-		// Update level
-		if (this.levelUpLines >= 8) {
+		this.deletedLevelLines += deletedLines;
+		this.deletedLines += deletedLines;
+		// Check if we need to increase the level
+		if (this.deletedLevelLines >= 8) {
 			this.level++;
-			this.levelUpLines = 0;
+			// FIXME: if the score was 7 and the player removed 4 lines,
+			// the level is currently only increased and the deleted lines
+			// set back to 0. Maybe we want to set the deleted lines
+			// to deleted lines % MAX_LINES to account for the overshoot.
+			this.deletedLevelLines = 0;
 		}
-		// Assigning points according to deleted lines
-		let points = 0;
-		switch (lineCount) {
+		// Increase the score
+		let additionalScore = 0;
+		switch (deletedLines) {
 			case 0:
 				break;
 			case 1:
-				points = 40;
+				additionalScore += 40;
 				break;
 			case 2:
-				points = 100;
+				additionalScore += 100;
 				break;
 			case 3:
-				points = 300;
+				additionalScore += 300;
 				break;
 			case 4:
-				points = 1200;
+				additionalScore += 1200;
 				break;
 			default:
-				console.error(
-					`Score could not be updated, deleted lines are not in range. It was "${lineCount}"`
+				console.warn(
+					`score should not be updated as deleted lines were not in range.` +
+						`\ndeleted lines were ${deletedLines}`
 				);
 		}
-		// Update score according to level
-		this.score += points * this.level;
-		this.displayScore.innerText = this.score.toString();
-		this.displayLevel.innerText = this.level.toString();
+		// Score is multiplied by the level the player is on
+		this.score += additionalScore * this.level;
+		// Update the score displays
+		this.levelDisplay.innerText = this.score.toString();
+		this.scoreDisplay.innerText = this.level.toString();
 	}
 }
