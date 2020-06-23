@@ -3,157 +3,191 @@ import { Tetromino } from './tetromino';
 import { MoveResponse } from './moveResponse';
 import { PhysicsInterface } from './interface';
 import { Block } from './block';
-
-/**
- * TODO: Move piece into the board if rotated outside it. Currently we just don't allow
- *  rotating.
- */
+import { Point2D } from '../globals';
 
 /**
  * Class with the physics of the game
  */
 export class PhysicsEngine implements PhysicsInterface {
-	private board: (Block | null)[][] = [];
-	private static readonly WIDTH = 10;
-	private static readonly HEIGHT = 20;
-
 	/**
-	 * Constructor of the PhysicsEngine class
+	 * Actual height is the board height, plus the yOffset which is offscreen
 	 */
-	public constructor() {
-		// Initialize board
-		for (let y = 0; y < 20; y++) {
-			this.board.push([]);
-			for (let x = 0; x < 10; x++) this.board[y][x] = null;
-		}
+	private actualHeight: number;
+	private board: (Block | null)[][];
+	private height: number;
+	private width: number;
+	private yOffset: number;
+
+	public constructor(width: number, height: number, yOffset: number) {
+		this.width = width;
+		this.height = height;
+		this.yOffset = yOffset;
+
+		this.actualHeight = height + yOffset;
+
+		this.board = new Array(this.actualHeight)
+			.fill(null)
+			.map(() => new Array(width).fill(null));
 	}
-	/**
-	 * Method that rotates the tetromino
-	 */
-	public rotate(tetromino: Tetromino): void {
-		tetromino.rotate();
 
-		if (this.outOfBounds(tetromino) || this.isColliding(tetromino)) {
+	public addBlocks(blocks: Block[]): void {
+		blocks.forEach((_) => this.addBlock(_));
+	}
+	public move(tetromino: Tetromino, dir: Dir): MoveResponse {
+		const moveResponse: MoveResponse = {
+			hitBottom: false,
+			removedLines: 0,
+		};
+		// Move the tetromino in the desired direction. Then check if
+		// we're out of bounds or colliding with anything. If yes, simply move
+		// the tetromino back.
+		tetromino.move(dir);
+		if (this.isOutOfBounds(tetromino) || this.isColliding(tetromino)) {
+			tetromino.move(Dir.opposite(dir));
+			// Check if we hit bottom and return it
+			if (dir === Dir.DOWN) {
+				moveResponse.hitBottom = true;
+				moveResponse.removedLines = this.removeFullLines();
+			}
+		}
+		return moveResponse;
+	}
+	public projectToBottom(tetromino: Tetromino): void {
+		for (let i = 0; i < this.actualHeight; i++) {
+			if (this.move(tetromino, Dir.DOWN).hitBottom) return;
+		}
+		console.warn('could not project to bottom, exiezded board size');
+	}
+	public rotate(tetromino: Tetromino): void {
+		// Rotate the tetromino. Then check if it's colliding or out of bounds.
+		// If yes, simply rotate it back
+		tetromino.rotate();
+		if (this.isOutOfBounds(tetromino) || this.isColliding(tetromino)) {
 			tetromino.rotate(-1);
 		}
 	}
 	/**
-	 * Print the current board to the console
+	 * Adds a block the the game board. This method also does
+	 * offset removal and checks if the position is actually valid.
+	 * @param block block which should be added to the game board
 	 */
-	public logBoard(): void {
-		let str = '';
-		for (let y = 0; y < 20; y++) {
-			for (let x = 0; x < 10; x++) {
-				str += this.getBlock(x, y) !== null ? '■' : '□';
-			}
-			str += '\n';
+	private addBlock(block: Block): void {
+		const position = block.getPosition().clone();
+		if (!this.isPositionValid(position)) {
+			console.warn(
+				`Could not add block at invalid position ${position.toString()}`
+			);
+		} else {
+			this.removeOffset(position);
+			this.board[position.getY()][position.getX()] = block;
 		}
-		console.log(str);
 	}
 	/**
-	 * Method that lets tetromino move
+	 * Clears a block from the game board. This method also does
+	 * offset removal and checks if the position is actually valid.
+	 * @param position position where to clear the block
 	 */
-	public move(tetromino: Tetromino, dir: Dir): MoveResponse {
-		tetromino.move(dir);
-
-		if (this.outOfBounds(tetromino) || this.isColliding(tetromino)) {
-			tetromino.move(Dir.opposite(dir));
-			if (dir === Dir.DOWN) {
-				return {
-					hitBottom: true,
-				};
-			}
+	private clearBlock(position: Point2D): void {
+		const realPosition = position.clone();
+		if (!this.isPositionValid(position)) {
+			console.warn(
+				`Could not clear block at invalid position ${position.toString()}`
+			);
+		} else {
+			this.removeOffset(realPosition);
+			this.board[realPosition.getY()][realPosition.getX()] = null;
 		}
-
-		return { hitBottom: false };
-	}
-	public removeFullLines(): number {
-		let count = 0;
-		let startingLine = -1;
-		for (let y = PhysicsEngine.HEIGHT - 1; y >= 0; y--) {
-			let lineFull = true;
-			for (let x = 0; x < PhysicsEngine.WIDTH - 1; x++) {
-				if (this.getBlock(x, y) === null) lineFull = false;
-			}
-			if (lineFull) {
-				count++;
-				if (y > startingLine) startingLine = y;
-				const line = this.board[y];
-
-				for (let i = 0; i < line.length; i++) {
-					const block = line[i];
-					if (block !== null) {
-						block.onDelete();
-						line[i] = null;
-					}
-				}
-			}
-		}
-
-		if (startingLine !== -1) {
-			for (let y = startingLine - 1; y >= 0; y--) {
-				for (let x = 0; x < PhysicsEngine.WIDTH; x++) {
-					const block = this.getBlock(x, y);
-					if (block !== null) {
-						const position = block.getPosition();
-						position.setY(y + count);
-						// Move the block
-						this.setBlock(position.getX(), position.getY(), block);
-						// Clear the old location
-						this.setBlock(x, y, null);
-					}
-				}
-			}
-		}
-
-		return count;
-	}
-	public setBlocks(blocks: Block[]): void {
-		blocks.forEach((block) => {
-			const position = block.getPosition();
-			this.setBlock(position.getX(), position.getY(), block);
-		});
 	}
 	/**
-	 * Method that checks collision of tetromino with other blocks when moving
+	 * Get a block form the game game board. This method also does
+	 * offset removal and checks if the position is actually valid.
+	 * @param position position of where to get the block
 	 */
-	private isColliding(newTetromino: Tetromino): boolean {
-		for (const block of newTetromino.getBlocks()) {
-			const position = block.getPosition();
-			if (this.getBlock(position.getX(), position.getY()) !== null) return true;
+	private getBlock(position: Point2D): Block | null {
+		if (!this.isPositionValid(position)) {
+			console.warn(
+				`Could not get block at invalid position ${position.toString()}`
+			);
+			return null;
 		}
-		return false;
+		const actualPosition = this.removeOffset(position.clone());
+		return this.board[actualPosition.getY()][actualPosition.getX()];
 	}
 	/**
-	 * Method that checks if coordinates are out of bounds
+	 * Checks if a tetromino is colliding with blocks in the game board
+	 * @param tetromino tetromino which should be checked
 	 */
-	private outOfBounds(tetromino: Tetromino): boolean {
+	private isColliding(tetromino: Tetromino): boolean {
 		for (const block of tetromino.getBlocks()) {
-			const position = block.getPosition();
-			if (
-				position.getX() > PhysicsEngine.WIDTH - 1 ||
-				position.getX() < 0 ||
-				position.getY() > PhysicsEngine.HEIGHT - 1 ||
-				position.getY() < 0
-			) {
-				return true;
-			}
+			if (this.getBlock(block.getPosition()) !== null) return true;
 		}
 		return false;
 	}
-	private setBlock(x: number, y: number, block: Block | null): void {
-		if (block) block.getPosition().setXY(x, y);
-		this.board[y][x] = block;
+	/**
+	 * Checks if a tetromino is out of bounds
+	 * @param tetromino tetromino which should be checked
+	 */
+	private isOutOfBounds(tetromino: Tetromino): boolean {
+		for (const block of tetromino.getBlocks()) {
+			if (!this.isPositionValid(block.getPosition())) return true;
+		}
+		return false;
 	}
-	private getBlock(x: number, y: number): Block | null {
-		if (!this.isInBound(x, y)) {
-			console.warn(`Position (${x}, ${y}) is out of bounds`);
-		} else return this.board[y][x];
-		return null;
+	/**
+	 * Validates a 2d position (checks if it is inside the game board)
+	 * @param position position which should be validated
+	 */
+	private isPositionValid(position: Point2D): boolean {
+		const realPosition = this.removeOffset(position.clone());
+		const X = realPosition.getX();
+		const Y = realPosition.getY();
+
+		return X >= 0 && X < this.width && Y >= 0 && Y < this.actualHeight;
 	}
-	private isInBound(x: number, y: number): boolean {
-		return (
-			x >= 0 && x < PhysicsEngine.WIDTH && y >= 0 && y < PhysicsEngine.HEIGHT
-		);
+	/**
+	 * Remove all full lines from the game board and return the amount
+	 * of lines removed
+	 */
+	private removeFullLines(): number {
+		let fullLines = 0;
+		for (let y = this.actualHeight - 1; y >= 0; y--) {
+			let lineFull = true;
+			for (const block of this.board[y]) {
+				if (block === null) lineFull = false;
+			}
+
+			if (lineFull) {
+				fullLines++;
+				for (const block of this.board[y]) {
+					if (block) {
+						// Remove the block from the board and notify it, that it
+						// has been removed
+						this.clearBlock(block.getPosition());
+						block.onDelete();
+					}
+				}
+
+				for (let something = y - 1; something >= 0; something--) {
+					for (const block of this.board[something]) {
+						if (block) {
+							const position = block.getPosition();
+							this.clearBlock(position);
+							position.add(new Point2D(0, 1));
+							this.addBlock(block);
+						}
+					}
+				}
+
+				y++;
+			}
+		}
+		return fullLines;
+	}
+	/**
+	 * Removed a **new** point without the game board offset
+	 * @param point starting point
+	 */
+	private removeOffset(point: Point2D): Point2D {
+		return point.add(new Point2D(0, this.yOffset));
 	}
 }
