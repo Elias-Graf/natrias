@@ -56,7 +56,7 @@ export class PhysicsEngine implements PhysicsInterface {
 		for (let i = 0; i < this.actualHeight; i++) {
 			if (this.move(tetromino, Dir.DOWN).hitBottom) return;
 		}
-		console.warn('could not project to bottom, exiezded board size');
+		console.warn('could not project to bottom, exceeded board size');
 	}
 	public rotate(tetromino: Tetromino): void {
 		// Rotate the tetromino. Then check if it's colliding or out of bounds.
