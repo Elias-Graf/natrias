@@ -15,7 +15,6 @@ export abstract class DefaultDrawable implements Drawable {
 	 * @param context context of the canvas
 	 */
 	public abstract render(context: CanvasRenderingContext2D): void;
-
 	/**
 	 * Sets the renderer in which the drawable is registered.
 	 * @param renderer the renderer in which the drawable is registered
