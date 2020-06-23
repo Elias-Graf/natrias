@@ -1,6 +1,5 @@
 import { Dir } from '../globals/direction';
 import { Tetromino } from './tetromino';
-import { MoveResponse } from './moveResponse';
 import { PhysicsInterface } from './interface';
 import { Block } from './block';
 import { Point2D } from '../globals';
@@ -33,30 +32,60 @@ export class PhysicsEngine implements PhysicsInterface {
 	public addBlocks(blocks: Block[]): void {
 		blocks.forEach((_) => this.addBlock(_));
 	}
-	public move(tetromino: Tetromino, dir: Dir): MoveResponse {
-		const moveResponse: MoveResponse = {
-			hitBottom: false,
-			removedLines: 0,
-		};
+	public move(tetromino: Tetromino, dir: Dir): boolean {
 		// Move the tetromino in the desired direction. Then check if
 		// we're out of bounds or colliding with anything. If yes, simply move
 		// the tetromino back.
 		tetromino.move(dir);
 		if (this.isOutOfBounds(tetromino) || this.isColliding(tetromino)) {
 			tetromino.move(Dir.opposite(dir));
-			// Check if we hit bottom and return it
-			if (dir === Dir.DOWN) {
-				moveResponse.hitBottom = true;
-				moveResponse.removedLines = this.removeFullLines();
-			}
+			// Check if we hit bottom, if yes, return that information
+			if (dir === Dir.DOWN) return false;
 		}
-		return moveResponse;
+		return true;
 	}
 	public projectToBottom(tetromino: Tetromino): void {
 		for (let i = 0; i < this.actualHeight; i++) {
-			if (this.move(tetromino, Dir.DOWN).hitBottom) return;
+			if (!this.move(tetromino, Dir.DOWN)) return;
 		}
-		console.warn('could not project to bottom, exceeded board size');
+		console.warn(
+			'could not project tetromino to bottom, exceeded board height'
+		);
+	}
+	public removeFullLines(): number {
+		let fullLines = 0;
+		for (let y = this.actualHeight - 1; y >= 0; y--) {
+			let lineFull = true;
+			for (const block of this.board[y]) {
+				if (block === null) lineFull = false;
+			}
+
+			if (lineFull) {
+				fullLines++;
+				for (const block of this.board[y]) {
+					if (block) {
+						// Remove the block from the board and notify it, that it
+						// has been removed
+						this.clearBlock(block.getPosition());
+						block.onDelete();
+					}
+				}
+
+				for (let something = y - 1; something >= 0; something--) {
+					for (const block of this.board[something]) {
+						if (block) {
+							const position = block.getPosition();
+							this.clearBlock(position);
+							position.add(new Point2D(0, 1));
+							this.addBlock(block);
+						}
+					}
+				}
+
+				y++;
+			}
+		}
+		return fullLines;
 	}
 	public rotate(tetromino: Tetromino): void {
 		// Rotate the tetromino. Then check if it's colliding or out of bounds.
@@ -143,45 +172,6 @@ export class PhysicsEngine implements PhysicsInterface {
 		const Y = realPosition.getY();
 
 		return X >= 0 && X < this.width && Y >= 0 && Y < this.actualHeight;
-	}
-	/**
-	 * Remove all full lines from the game board and return the amount
-	 * of lines removed
-	 */
-	private removeFullLines(): number {
-		let fullLines = 0;
-		for (let y = this.actualHeight - 1; y >= 0; y--) {
-			let lineFull = true;
-			for (const block of this.board[y]) {
-				if (block === null) lineFull = false;
-			}
-
-			if (lineFull) {
-				fullLines++;
-				for (const block of this.board[y]) {
-					if (block) {
-						// Remove the block from the board and notify it, that it
-						// has been removed
-						this.clearBlock(block.getPosition());
-						block.onDelete();
-					}
-				}
-
-				for (let something = y - 1; something >= 0; something--) {
-					for (const block of this.board[something]) {
-						if (block) {
-							const position = block.getPosition();
-							this.clearBlock(position);
-							position.add(new Point2D(0, 1));
-							this.addBlock(block);
-						}
-					}
-				}
-
-				y++;
-			}
-		}
-		return fullLines;
 	}
 	/**
 	 * Removed a **new** point without the game board offset

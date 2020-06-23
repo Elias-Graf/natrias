@@ -1,6 +1,5 @@
 import { Dir } from '../globals';
 import { Tetromino } from './tetromino';
-import { MoveResponse } from './moveResponse';
 import { Block } from './block';
 
 export interface PhysicsInterface {
@@ -14,12 +13,17 @@ export interface PhysicsInterface {
 	 * @param tetromino tetromino that should be checked
 	 * @param dir direction in which the tetromino should be moved
 	 */
-	move(tetromino: Tetromino, dir: Dir): MoveResponse;
+	move(tetromino: Tetromino, dir: Dir): boolean;
 	/**
 	 * Project a tetromino to the bottom of the board
 	 * @param tetromino tetromino which should be projected to the bottom
 	 */
 	projectToBottom(tetromino: Tetromino): void;
+	/**
+	 * Remove all full lines from the game board and return the amount
+	 * of lines removed
+	 */
+	removeFullLines(): number;
 	/**
 	 * Check if a tetromino can be rotated
 	 * @param tetromino tetromino that should be checked
