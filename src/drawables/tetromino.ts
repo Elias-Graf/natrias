@@ -5,8 +5,6 @@ import { TemplateType } from '../tetrominoes/type';
 import { getTemplate } from '../tetrominoes';
 import { DefaultDrawable } from '../render/defaultDrawable';
 
-// TODO: blocks as children (not template)
-
 export class DrawableTetromino extends DefaultDrawable implements Tetromino {
 	private blocks: DrawableBlock[] = [];
 	private origin: Point2D;

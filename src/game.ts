@@ -5,6 +5,11 @@ import { TemplateType } from './tetrominoes';
 import { PhysicsEngine } from './physics';
 
 // TODO: generate UML
+// TODO: different colors
+// TODO: rotation into wall possible but pushed back
+// TODO: spawning
+// TODO: next up display
+// TODO: launcher + game over screen
 
 export class Natrias {
 	private readonly BLOCK_SIZE = 50;
