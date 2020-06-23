@@ -38,8 +38,8 @@ export class Natrias {
 
 	public constructor() {
 		// Get the score and level display elements
-		const LEVEL_DISPLAY = document.getElementById('score');
-		const SCORE_DISPLAY = document.getElementById('level');
+		const LEVEL_DISPLAY = document.getElementById('level');
+		const SCORE_DISPLAY = document.getElementById('score');
 		if (LEVEL_DISPLAY === null)
 			throw new Error('could not find level display HTML element');
 		if (SCORE_DISPLAY === null)
@@ -98,11 +98,8 @@ export class Natrias {
 			if (this.activeTetromino === null) {
 				console.warn('could not move active tetromino, it is null');
 			} else {
-				const { hitBottom, removedLines } = this.physics.move(
-					this.activeTetromino,
-					direction
-				);
-				if (hitBottom) {
+				// Try to move the tetromino (move returns false when it hit something)
+				if (!this.physics.move(this.activeTetromino, direction)) {
 					// Unregister the tetromino as a whole
 					this.renderer.unregisterDrawable(this.activeTetromino);
 					// Get it's blocks and give those to the physics- and renderer engine
@@ -111,9 +108,8 @@ export class Natrias {
 					blocks.forEach((block) => this.renderer.registerDrawable(block));
 					// Spawn the next tetromino
 					this.spawnNextTetromino();
-
-					// IF we have removed lines, we need to update the score
-					if (removedLines !== 0) this.updateScore(removedLines);
+					// Update the score with the amount of removed line
+					this.updateScore(this.physics.removeFullLines());
 				}
 
 				this.updateProjection();
