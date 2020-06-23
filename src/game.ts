@@ -1,8 +1,8 @@
-import { RenderEngine } from './render';
+import { RenderEngine, RendererInterface } from './render';
 import { Dir, Point2D } from './globals';
 import { DrawableTetromino } from './drawables';
 import { TemplateType } from './tetrominoes';
-import { PhysicsEngine } from './physics';
+import { PhysicsEngine, PhysicsInterface } from './physics';
 
 // TODO: generate UML
 // TODO: different colors
@@ -10,6 +10,7 @@ import { PhysicsEngine } from './physics';
 // TODO: spawning
 // TODO: next up display
 // TODO: launcher + game over screen
+// TODO: move tetromino.move into physics (this also applies for rotate)
 
 export class Natrias {
 	private readonly BLOCK_SIZE = 50;
@@ -24,15 +25,20 @@ export class Natrias {
 	private forceMoveDelta = 750;
 	private gameTickInterval: number | null = null;
 	private isPaused = false;
-	private level = 1;
+	private level = 10;
 	private levelDisplay: HTMLElement;
-	private physics = new PhysicsEngine(this.WIDTH, this.HEIGHT, this.Y_OFFSET);
+	private physics: PhysicsInterface = new PhysicsEngine(
+		this.WIDTH,
+		this.HEIGHT,
+		this.Y_OFFSET
+	);
 	private previousForceMove = Date.now();
-	private renderer = new RenderEngine(
+	private renderer: RendererInterface = new RenderEngine(
 		document.body,
 		this.WIDTH * this.BLOCK_SIZE,
 		this.HEIGHT * this.BLOCK_SIZE
 	);
+
 	private score = 0;
 	private scoreDisplay: HTMLElement;
 

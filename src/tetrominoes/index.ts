@@ -24,7 +24,7 @@ export function getTemplate(type: TemplateType): Point2D[] {
 		case TemplateType.Z:
 			return TEMPLATE_Z.map(Point2D.clone);
 		default:
-			console.warn('template type "${type}" not found');
+			console.warn(`template type "${type}" not found`);
 			return TEMPLATE_O.map(Point2D.clone);
 	}
 }
