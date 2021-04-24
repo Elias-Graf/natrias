@@ -23,7 +23,7 @@
 		"client:bundle": "webpack",
 		"client:dev": "webpack serve",
 		"lint": "eslint '*/**/*.ts'",
-		"lint:fix": "npm run lint -- --fix",
+		"lint:fix": "eslint '*/**/*.ts' --fix",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
