@@ -116,7 +116,6 @@ export class RenderEngine {
 	}
 
 	// TODO: create a dedicated utility for stuff like this
-	// eslint-disable-next-line @typescript-eslint/camelcase
 	private temp_background(color: string): void {
 		const { canvas, canvasContext } = this;
 		const previous = canvasContext.fillStyle;
