@@ -21,7 +21,7 @@
 	},
 	"scripts": {
 		"client:bundle": "webpack",
-		"client:dev": "webpack-dev-server",
+		"client:dev": "webpack serve",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {

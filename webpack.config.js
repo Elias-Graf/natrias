@@ -10,6 +10,7 @@ module.exports = {
 		quiet: true,
 	},
 	entry: './src/client/index.ts',
+	mode: 'development',
 	module: {
 		rules: [
 			{
@@ -25,6 +26,6 @@ module.exports = {
 	output: {
 		filename: 'bundle.js',
 		path: path.resolve(__dirname, 'build'),
-		publicPath: 'build',
+		publicPath: '/build/',
 	},
 };
