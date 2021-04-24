@@ -18,8 +18,8 @@
 		"webpack-dev-server": "^3.11.0"
 	},
 	"scripts": {
-		"start": "webpack",
-		"start:dev": "webpack-dev-server",
+		"client:bundle": "webpack",
+		"client:dev": "webpack-dev-server",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {

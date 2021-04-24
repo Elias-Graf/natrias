@@ -9,7 +9,7 @@ module.exports = {
 		hot: true,
 		quiet: true,
 	},
-	entry: './src/index.ts',
+	entry: './src/client/index.ts',
 	module: {
 		rules: [
 			{
