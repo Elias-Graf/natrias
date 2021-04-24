@@ -22,6 +22,8 @@
 	"scripts": {
 		"client:bundle": "webpack",
 		"client:dev": "webpack serve",
+		"lint": "eslint '*/**/*.ts'",
+		"lint:fix": "npm run lint -- --fix",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
