@@ -4,7 +4,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 module.exports = {
 	devtool: 'inline-source-map',
 	devServer: {
-		contentBase: path.join(__dirname),
+		contentBase: path.join(__dirname, './src/client'),
 		port: 9000,
 		watchContentBase: true,
 		hot: true,
