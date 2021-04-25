@@ -1,15 +1,15 @@
 import ServerMessageType from "shared/ServerMessageType";
-import Game from "./game";
+import Logic from "./game/logic";
 import ClientMessageType from "shared/ClientMessageType";
 import Connection from "./connection/Connection";
 import WebSocketConnection from "./connection/WebSocketConnection";
 import Client from "./connection/Client";
 
 const connection: Connection = new WebSocketConnection();
-const games = new Map<Client, Game>();
+const games = new Map<Client, Logic>();
 
 connection.addListener("connect", (client) => {
-	const game = new Game();
+	const game = new Logic();
 
 	game.addListener("change", () =>
 		client.send({ board: game.getBoard(), type: ServerMessageType.Board })

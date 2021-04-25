@@ -7,7 +7,7 @@ import templates from "./templates";
 import Tetromino from "./Tetromino";
 import TetrominoType from "./TetrominoType";
 
-export default class Game extends EventEmitter {
+export default class Logic extends EventEmitter {
 	/**
 	 * Actual height is the board height, plus the yOffset which is offscreen
 	 */
