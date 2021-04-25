@@ -1,13 +1,14 @@
-import { Dir } from '../globals';
-import { Tetromino } from './tetromino';
-import { Block } from './block';
+import { Dir } from "../globals";
+import { Tetromino } from "./tetromino";
+import { Block } from "./block";
 
 export interface PhysicsInterface {
 	/**
 	 * Add multiple block the the physics board
 	 * @param blocks blocks which should be added
 	 */
-	addBlocks(blocks: Block[]): void;
+	addBlocks(blocks: (Block | null)[]): void;
+	getBoard(): (Block | null)[][];
 	/**
 	 * Check if a tetromino can move in a particular direction
 	 * @param tetromino tetromino that should be checked
@@ -24,6 +25,7 @@ export interface PhysicsInterface {
 	 * of lines removed
 	 */
 	removeFullLines(): number;
+
 	/**
 	 * Check if a tetromino can be rotated
 	 * @param tetromino tetromino that should be checked

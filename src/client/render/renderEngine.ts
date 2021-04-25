@@ -1,6 +1,7 @@
-import { Drawable } from './drawable';
+import { Drawable } from "./drawable";
+import { RendererInterface } from "./interface";
 
-export class RenderEngine {
+export class RenderEngine implements RendererInterface {
 	public static readonly RENDER_INTERVAL = 1;
 
 	private canvas: HTMLCanvasElement;
@@ -16,12 +17,12 @@ export class RenderEngine {
 	public constructor(container: HTMLElement, width: number, height: number) {
 		// Create the canvas and add it to the provided container
 		this.canvasContainer = container;
-		this.canvas = document.createElement('canvas');
+		this.canvas = document.createElement("canvas");
 		this.canvas.width = width;
 		this.canvas.height = height;
 		container.appendChild(this.canvas);
 		// Get the canvas context
-		const CANVAS_CONTEXT = this.canvas.getContext('2d');
+		const CANVAS_CONTEXT = this.canvas.getContext("2d");
 		if (CANVAS_CONTEXT === null) {
 			throw new Error(
 				'"canvas.getContext" returned null (FATAL - UNRECOVERABLE)'
@@ -31,6 +32,10 @@ export class RenderEngine {
 		// Bind methods which are called from a different context
 		this.render = this.render.bind(this);
 	}
+
+	public getDrawables(): Drawable[] {
+		return this.drawables;
+	}
 	/**
 	 * Register a drawable to the renderer
 	 * @param drawable what should be added
@@ -38,7 +43,7 @@ export class RenderEngine {
 	public registerDrawable(drawable: Drawable): void {
 		// Check if we already know this drawable
 		if (this.drawables.indexOf(drawable) !== -1) {
-			console.warn('trying to register already registered drawable');
+			console.warn("trying to register already registered drawable");
 		} else {
 			drawable.setRenderer(this);
 			this.drawables.push(drawable);
@@ -53,7 +58,7 @@ export class RenderEngine {
 		const DRAWABLE_INDEX = this.drawables.indexOf(drawable);
 		if (DRAWABLE_INDEX === -1) {
 			console.warn(
-				'trying to unregister a drawable which has not yet been registered'
+				"trying to unregister a drawable which has not yet been registered"
 			);
 		} else this.drawables.splice(DRAWABLE_INDEX, 1);
 	}
@@ -64,7 +69,7 @@ export class RenderEngine {
 		// Check if we're not already running
 		if (this.intervalId !== undefined) {
 			console.warn(
-				'trying to start the render engine but it is already running'
+				"trying to start the render engine but it is already running"
 			);
 		} else {
 			// Start the intervale
@@ -82,14 +87,14 @@ export class RenderEngine {
 	public stop(): void {
 		if (this.intervalId === undefined) {
 			console.warn(
-				'trying to stop the render engine but it was not running in the first place'
+				"trying to stop the render engine but it was not running in the first place"
 			);
 		} else window.clearInterval(this.intervalId);
 	}
 	public getFPS(): number {
 		if (this.startedAt === undefined) {
 			throw new Error(
-				'tried to get frames per second but the render is not running (startedAt === undefined)'
+				"tried to get frames per second but the render is not running (startedAt === undefined)"
 			);
 		}
 		return (
@@ -110,7 +115,7 @@ export class RenderEngine {
 		// Increase FPS
 		this.FPSCurrent++;
 		// Clear the previous frame
-		this.temp_background('black');
+		this.temp_background("black");
 		// Render all registered drawables
 		this.drawables.forEach((_) => _.render(this.canvasContext));
 	}

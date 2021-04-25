@@ -1,8 +1,10 @@
-import { RenderEngine, RendererInterface } from './render';
-import { Dir, Point2D } from './globals';
-import { DrawableTetromino } from './drawables';
-import { TemplateType } from './tetrominoes';
-import { PhysicsEngine, PhysicsInterface } from './physics';
+import { RenderEngine, RendererInterface } from "./render";
+import { Dir, Point2D } from "./globals";
+import { DrawableBlock, DrawableTetromino } from "./drawables";
+import { TemplateType } from "./tetrominoes";
+import { PhysicsEngine, PhysicsInterface } from "./physics";
+import ServerMessageType from "@/shared/ServerMessageType";
+import ServerMessage from "@/shared/ServerMessage";
 
 // TODO: generate UML
 // TODO: different colors
@@ -11,6 +13,7 @@ import { PhysicsEngine, PhysicsInterface } from './physics';
 // TODO: next up display
 // TODO: launcher + game over screen
 // TODO: move tetromino.move into physics (this also applies for rotate)
+const socket = new WebSocket("ws://localhost:4001");
 
 export class Natrias {
 	private readonly BLOCK_SIZE = 50;
@@ -44,33 +47,32 @@ export class Natrias {
 
 	public constructor() {
 		// Get the score and level display elements
-		const LEVEL_DISPLAY = document.getElementById('level');
-		const SCORE_DISPLAY = document.getElementById('score');
+		const LEVEL_DISPLAY = document.getElementById("level");
+		const SCORE_DISPLAY = document.getElementById("score");
 		if (LEVEL_DISPLAY === null)
-			throw new Error('could not find level display HTML element');
+			throw new Error("could not find level display HTML element");
 		if (SCORE_DISPLAY === null)
-			throw new Error('could not find score display HTML element');
+			throw new Error("could not find score display HTML element");
 		this.levelDisplay = LEVEL_DISPLAY;
 		this.scoreDisplay = SCORE_DISPLAY;
 		// Add the keyboard listener
-		document.addEventListener('keydown', this.onKeyPress.bind(this));
+		document.addEventListener("keydown", this.onKeyPress.bind(this));
 		// Start the renderer
 		this.renderer.start();
 		// Spawn the first tetromino
 		this.spawnNextTetromino();
 		// Initially display the score by "updating" it
 		this.updateScore(0);
-		// "Resume" - start the game
-		this.resume();
 	}
 
 	/**
 	 * Start / resume the game
 	 */
-	private resume(): void {
+	public resume(): void {
 		this.gameTickInterval = window.setInterval(this.gameTick.bind(this), 10);
 		this.isPaused = false;
 	}
+
 	/**
 	 * Pause the game
 	 */
@@ -102,7 +104,7 @@ export class Natrias {
 	private moveActiveTetromino(direction: Dir): void {
 		if (!this.isPaused) {
 			if (this.activeTetromino === null) {
-				console.warn('could not move active tetromino, it is null');
+				console.warn("could not move active tetromino, it is null");
 			} else {
 				// Try to move the tetromino (move returns false when it hit something)
 				if (!this.physics.move(this.activeTetromino, direction)) {
@@ -128,7 +130,7 @@ export class Natrias {
 	private rotateActiveTetromino(): void {
 		if (!this.isPaused) {
 			if (this.activeTetromino === null) {
-				console.warn('could not rotate active tetromino, it it null');
+				console.warn("could not rotate active tetromino, it it null");
 			} else {
 				this.physics.rotate(this.activeTetromino);
 
@@ -145,28 +147,28 @@ export class Natrias {
 			/**
 			 * Directional control (moving)
 			 */
-			case 'ArrowLeft':
+			case "ArrowLeft":
 				this.moveActiveTetromino(Dir.LEFT);
 				break;
-			case 'ArrowDown':
+			case "ArrowDown":
 				this.moveActiveTetromino(Dir.DOWN);
 				break;
-			case 'ArrowRight':
+			case "ArrowRight":
 				this.moveActiveTetromino(Dir.RIGHT);
 				break;
 			/**
 			 * Rotating
 			 */
-			case 'ArrowUp':
+			case "ArrowUp":
 				this.rotateActiveTetromino();
 				break;
 			/**
 			 * Other
 			 */
-			case 'Enter':
+			case "Enter":
 				if (this.activeTetromino === null) {
 					console.warn(
-						'could not project active tetromino to bottom, it was null'
+						"could not project active tetromino to bottom, it was null"
 					);
 				} else {
 					// Project the tetromino to the bottom of the screen
@@ -175,7 +177,7 @@ export class Natrias {
 					this.moveActiveTetromino(Dir.DOWN);
 				}
 				break;
-			case 'Escape':
+			case "Escape":
 				if (this.isPaused) this.resume();
 				else this.pause();
 				break;
@@ -223,9 +225,9 @@ export class Natrias {
 				type
 			);
 			this.activeTetrominoProjection.setColors({
-				dark: '#00000032',
-				light: '#FFFFFF32',
-				normal: '#7F7F7F32',
+				dark: "#00000032",
+				light: "#FFFFFF32",
+				normal: "#7F7F7F32",
 			});
 			this.renderer.registerDrawable(this.activeTetrominoProjection);
 		} else {

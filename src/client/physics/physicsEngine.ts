@@ -1,8 +1,8 @@
-import { Dir } from '../globals/direction';
-import { Tetromino } from './tetromino';
-import { PhysicsInterface } from './interface';
-import { Block } from './block';
-import { Point2D } from '../globals';
+import { Dir } from "../globals/direction";
+import { Tetromino } from "./tetromino";
+import { PhysicsInterface } from "./interface";
+import { Block } from "./block";
+import { Point2D } from "../globals";
 
 /**
  * Class with the physics of the game
@@ -29,6 +29,9 @@ export class PhysicsEngine implements PhysicsInterface {
 			.map(() => new Array(width).fill(null));
 	}
 
+	public getBoard(): (Block | null)[][] {
+		return this.board;
+	}
 	public addBlocks(blocks: Block[]): void {
 		blocks.forEach((_) => this.addBlock(_));
 	}
@@ -49,7 +52,7 @@ export class PhysicsEngine implements PhysicsInterface {
 			if (!this.move(tetromino, Dir.DOWN)) return;
 		}
 		console.warn(
-			'could not project tetromino to bottom, exceeded board height'
+			"could not project tetromino to bottom, exceeded board height"
 		);
 	}
 	public removeFullLines(): number {
