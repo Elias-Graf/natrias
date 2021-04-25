@@ -58,10 +58,10 @@ enum TetrominoType {
 	Z,
 }
 interface Tetromino {
-	blocks: ReadonlyVector2[];
 	pos: Vector2;
 	rotation: number;
-	type: TetrominoType;
+	readonly template: ReadonlyVector2[];
+	readonly type: TetrominoType;
 }
 
 export default class Game extends EventEmitter {
@@ -113,8 +113,8 @@ export default class Game extends EventEmitter {
 		return {
 			type: t.type,
 			rotation: t.rotation,
+			template: t.template,
 			pos: t.pos.clone,
-			blocks: t.blocks,
 		};
 	}
 	public moveActiveTetromino(direction: Dir): void {
@@ -157,17 +157,11 @@ export default class Game extends EventEmitter {
 		}
 	}
 	private tetrominoIsInBounds(t: Tetromino): boolean {
-		const { blocks: template, pos } = t;
+		const blocks = this.getAbsoluteBlocksFor(t);
 
-		for (const relative of template) {
-			const absolute = relative.clone.add(pos);
-			const { x } = absolute;
-			let { y } = absolute;
-
-			y += this.yOffset;
-
+		for (const { x, y } of blocks) {
 			const isInBounds =
-				x >= 0 && x < this.width && y >= 0 && y < this.actualHeight;
+				x >= 0 && x < this.width && y > -this.yOffset && y < this.height;
 
 			if (!isInBounds) return false;
 		}
@@ -175,16 +169,17 @@ export default class Game extends EventEmitter {
 		return true;
 	}
 	private setTetromino(t: Tetromino, val: boolean) {
-		const { blocks: template, pos } = t;
+		const blocks = this.getAbsoluteBlocksFor(t);
 
-		for (const block of template) {
-			this.setPosition(block.clone.add(pos), val);
+		for (const block of blocks) {
+			this.setPosition(block, val);
 		}
 	}
 	public rotateActiveTetromino(amount = 1): void {
 		const newActiveTetromino = this.cloneTetromino(this.activeTetromino);
 
 		newActiveTetromino.rotation += amount;
+
 		// We don't want to rotate the O shape
 		if (newActiveTetromino.type === TetrominoType.O) return;
 
@@ -200,32 +195,6 @@ export default class Game extends EventEmitter {
 				if (newActiveTetromino.rotation > 3) newActiveTetromino.rotation = 0;
 				if (newActiveTetromino.rotation < 0) newActiveTetromino.rotation = 3;
 		}
-		newActiveTetromino.blocks = newActiveTetromino.blocks.map((block) => {
-			const newBlock = block.clone;
-
-			switch (newActiveTetromino.rotation) {
-				case 0:
-					break;
-				case 1:
-					newBlock.flip();
-					newBlock.x *= -1;
-					break;
-				case 2:
-					newBlock.scale(-1);
-					break;
-				case 3:
-					newBlock.flip();
-					newBlock.y *= -1;
-					break;
-				default:
-					console.error(
-						`Rotation not in limit: ${newActiveTetromino.rotation}`
-					);
-					break;
-			}
-
-			return newBlock;
-		});
 
 		if (
 			this.isTetrominoClearOfOthers(newActiveTetromino, this.activeTetromino) &&
@@ -243,8 +212,8 @@ export default class Game extends EventEmitter {
 		return {
 			type,
 			rotation: 0,
-			pos: new Vector2(5, 5),
-			blocks: TEMPLATES[type],
+			template: TEMPLATES[type],
+			pos: new Vector2(5, -2),
 		};
 	}
 	private setPosition(pos: ReadonlyVector2, block: boolean) {
@@ -278,8 +247,35 @@ export default class Game extends EventEmitter {
 	private spawnNextTetromino() {
 		this.activeTetromino = this.createRandomTetromino();
 	}
-	private getAbsoluteBlocksFor({ pos, blocks }: Tetromino): Vector2[] {
-		return blocks.map((b) => b.clone.add(pos));
+	private getAbsoluteBlocksFor({
+		pos,
+		template,
+		rotation,
+	}: Tetromino): Vector2[] {
+		return template.map((block) => {
+			const newBlock = block.clone;
+
+			switch (rotation) {
+				case 0:
+					break;
+				case 1:
+					newBlock.flip();
+					newBlock.x *= -1;
+					break;
+				case 2:
+					newBlock.scale(-1);
+					break;
+				case 3:
+					newBlock.flip();
+					newBlock.y *= -1;
+					break;
+				default:
+					console.error(`Rotation not in limit: ${rotation}`);
+					break;
+			}
+
+			return newBlock.add(pos);
+		}) as Vector2[];
 	}
 	private removeFullLines() {
 		let fullLines = 0;
