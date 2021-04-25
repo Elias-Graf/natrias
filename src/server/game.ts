@@ -3,66 +3,9 @@ import ReadonlyVector2 from "newton/2d/ReadonlyVector2";
 import { EventEmitter } from "events";
 import Dir from "shared/Dir";
 import { random } from "newton/utils/random";
-
-const TEMPLATE_I: ReadonlyVector2[] = [
-	new Vector2(0, 2),
-	new Vector2(0, 1),
-	new Vector2(0, 0),
-	new Vector2(0, -1),
-];
-const TEMPLATE_L: ReadonlyVector2[] = [
-	new Vector2(0, -2),
-	new Vector2(0, -1),
-	new Vector2(0, 0),
-	new Vector2(1, 0),
-];
-const TEMPLATE_O: ReadonlyVector2[] = [
-	new Vector2(0, -1),
-	new Vector2(1, -1),
-	new Vector2(0, 0),
-	new Vector2(1, 0),
-];
-const TEMPLATE_S: ReadonlyVector2[] = [
-	new Vector2(1, -1),
-	new Vector2(0, -1),
-	new Vector2(0, 0),
-	new Vector2(-1, 0),
-];
-const TEMPLATE_T: ReadonlyVector2[] = [
-	new Vector2(0, -1),
-	new Vector2(-1, 0),
-	new Vector2(0, 0),
-	new Vector2(1, 0),
-];
-const TEMPLATE_Z: ReadonlyVector2[] = [
-	new Vector2(-1, -1),
-	new Vector2(0, -1),
-	new Vector2(0, 0),
-	new Vector2(1, 0),
-];
-const TEMPLATES = [
-	TEMPLATE_I,
-	TEMPLATE_L,
-	TEMPLATE_O,
-	TEMPLATE_S,
-	TEMPLATE_T,
-	TEMPLATE_Z,
-];
-
-enum TetrominoType {
-	I,
-	L,
-	O,
-	S,
-	T,
-	Z,
-}
-interface Tetromino {
-	pos: Vector2;
-	rotation: number;
-	readonly template: ReadonlyVector2[];
-	readonly type: TetrominoType;
-}
+import templates from "./templates";
+import Tetromino from "./Tetromino";
+import TetrominoType from "./TetrominoType";
 
 export default class Game extends EventEmitter {
 	/**
@@ -74,6 +17,9 @@ export default class Game extends EventEmitter {
 	private width: number;
 	private yOffset: number;
 	private activeTetromino: Tetromino;
+	private gameTickInterval: NodeJS.Timer;
+	private forceMoveDelta = 700;
+	private lastForceMove = Date.now();
 
 	public constructor() {
 		super();
@@ -82,40 +28,22 @@ export default class Game extends EventEmitter {
 		this.height = 20;
 		this.yOffset = 5;
 		this.actualHeight = this.height + this.yOffset;
-
+		this.activeTetromino = this.createRandomTetromino();
 		this.board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
 
-		this.activeTetromino = this.createRandomTetromino();
-
-		setInterval(() => {
-			this.moveActiveTetromino(Dir.Down);
-			this.emit("change");
-		}, 500);
+		this.gameTickInterval = setInterval(this.gameTick, 50);
 	}
 
-	public getBoard(): boolean[][] {
-		return this.board.filter((_, i) => i > this.yOffset);
-	}
 	public addListener(type: "change", cb: () => void): this {
 		return super.addListener(type, cb);
 	}
-	public removeListener(type: "change", cb: () => void): this {
-		return super.addListener(type, cb);
-	}
-
 	public emit(type: "change"): boolean {
 		return super.emit(type);
 	}
-
-	private cloneTetromino(t: Tetromino): Tetromino {
-		return {
-			type: t.type,
-			rotation: t.rotation,
-			template: t.template,
-			pos: t.pos.clone,
-		};
+	public getBoard(): boolean[][] {
+		return this.board.filter((_, i) => i > this.yOffset);
 	}
 	public moveActiveTetromino(direction: Dir): void {
 		const next = this.cloneTetromino(this.activeTetromino);
@@ -135,86 +63,98 @@ export default class Game extends EventEmitter {
 				return;
 		}
 
-		const nextTetrominoIsInBounds = this.tetrominoIsInBounds(next);
-		const nextTetrominoIsClear =
-			nextTetrominoIsInBounds &&
-			this.isTetrominoClearOfOthers(next, this.activeTetromino);
-		const nextTetrominoHitTopOfOther =
-			direction === Dir.Down && !nextTetrominoIsClear;
+		const nextIsInBounds = this.tetrominoIsInBounds(next);
+		const nextIsClear =
+			nextIsInBounds &&
+			this.tetrominoIsClearOfOthers(next, this.activeTetromino);
+		const nextHitTopOfOther = direction === Dir.Down && !nextIsClear;
+		const nextHitBottom = direction === Dir.Down && !nextIsInBounds;
 
-		if (nextTetrominoIsInBounds && nextTetrominoIsClear) {
+		if (nextIsInBounds && nextIsClear) {
 			this.setTetromino(this.activeTetromino, false);
 
 			this.activeTetromino = next;
 
 			this.setTetromino(this.activeTetromino, true);
-		} else if (
-			this.tetrominoReachedBottom(next) ||
-			nextTetrominoHitTopOfOther
-		) {
+		} else if (nextHitBottom || nextHitTopOfOther) {
 			this.removeFullLines();
 			this.spawnNextTetromino();
 		}
 	}
-	private tetrominoIsInBounds(t: Tetromino): boolean {
-		const blocks = this.getAbsoluteBlocksFor(t);
-
-		for (const { x, y } of blocks) {
-			const isInBounds =
-				x >= 0 && x < this.width && y > -this.yOffset && y < this.height;
-
-			if (!isInBounds) return false;
-		}
-
-		return true;
-	}
-	private setTetromino(t: Tetromino, val: boolean) {
-		const blocks = this.getAbsoluteBlocksFor(t);
-
-		for (const block of blocks) {
-			this.setPosition(block, val);
-		}
+	public removeListener(type: "change", cb: () => void): this {
+		return super.addListener(type, cb);
 	}
 	public rotateActiveTetromino(amount = 1): void {
-		const newActiveTetromino = this.cloneTetromino(this.activeTetromino);
+		const next = this.cloneTetromino(this.activeTetromino);
 
-		newActiveTetromino.rotation += amount;
+		next.rotation += amount;
 
 		// We don't want to rotate the O shape
-		if (newActiveTetromino.type === TetrominoType.O) return;
+		if (next.type === TetrominoType.O) return;
 
-		switch (newActiveTetromino.type) {
+		switch (next.type) {
 			// Some shapes only need two rotations
 			case TetrominoType.I:
 			case TetrominoType.S:
 			case TetrominoType.Z:
-				if (newActiveTetromino.rotation > 1) newActiveTetromino.rotation = 0;
-				if (newActiveTetromino.rotation < 0) newActiveTetromino.rotation = 1;
+				if (next.rotation > 1) next.rotation = 0;
+				if (next.rotation < 0) next.rotation = 1;
 				break;
 			default:
-				if (newActiveTetromino.rotation > 3) newActiveTetromino.rotation = 0;
-				if (newActiveTetromino.rotation < 0) newActiveTetromino.rotation = 3;
+				if (next.rotation > 3) next.rotation = 0;
+				if (next.rotation < 0) next.rotation = 3;
 		}
 
 		if (
-			this.isTetrominoClearOfOthers(newActiveTetromino, this.activeTetromino) &&
-			this.tetrominoIsInBounds(newActiveTetromino)
+			this.tetrominoIsClearOfOthers(next, this.activeTetromino) &&
+			this.tetrominoIsInBounds(next)
 		) {
 			this.setTetromino(this.activeTetromino, false);
 
-			this.activeTetromino = newActiveTetromino;
+			this.activeTetromino = next;
 
 			this.setTetromino(this.activeTetromino, true);
 		}
 	}
-	private createRandomTetromino(): Tetromino {
-		const type = Math.floor(random(0, TEMPLATES.length - 1));
+	public stopGame(): void {
+		clearInterval(this.gameTickInterval);
+	}
+
+	private cloneTetromino(t: Tetromino): Tetromino {
 		return {
-			type,
-			rotation: 0,
-			template: TEMPLATES[type],
-			pos: new Vector2(5, -2),
+			type: t.type,
+			rotation: t.rotation,
+			template: t.template,
+			pos: t.pos.clone,
 		};
+	}
+	private createRandomTetromino(): Tetromino {
+		const type = Math.floor(
+			random(0, Object.keys(templates).length - 1)
+		) as TetrominoType;
+		const template = templates[type];
+
+		return { type, rotation: 0, template, pos: new Vector2(5, -2) };
+	}
+	private gameTick = () => {
+		const now = Date.now();
+
+		if (now - this.lastForceMove > this.forceMoveDelta) {
+			this.moveActiveTetromino(Dir.Down);
+			this.emit("change");
+
+			this.lastForceMove = now;
+		}
+	};
+	private getPosition(pos: ReadonlyVector2): boolean {
+		const { x } = pos;
+		const y = pos.y + this.yOffset;
+
+		try {
+			return this.board[y][x];
+		} catch (e) {
+			throw new Error(`Failed to get position ${pos} ${e}`);
+		}
 	}
 	private setPosition(pos: ReadonlyVector2, block: boolean) {
 		const { x } = pos;
@@ -228,10 +168,29 @@ export default class Game extends EventEmitter {
 			throw new Error(`Failed to set position ${pos} ${e}`);
 		}
 	}
-	private tetrominoReachedBottom(t: Tetromino) {
-		return t.pos.y + this.yOffset >= this.actualHeight;
+	private setTetromino(t: Tetromino, val: boolean) {
+		const blocks = this.getAbsoluteBlocksFor(t);
+
+		for (const block of blocks) {
+			this.setPosition(block, val);
+		}
 	}
-	private isTetrominoClearOfOthers(t: Tetromino, prev: Tetromino): boolean {
+	private spawnNextTetromino() {
+		this.activeTetromino = this.createRandomTetromino();
+	}
+	private tetrominoIsInBounds(t: Tetromino): boolean {
+		const blocks = this.getAbsoluteBlocksFor(t);
+
+		for (const { x, y } of blocks) {
+			const isInBounds =
+				x >= 0 && x < this.width && y > -this.yOffset && y < this.height;
+
+			if (!isInBounds) return false;
+		}
+
+		return true;
+	}
+	private tetrominoIsClearOfOthers(t: Tetromino, prev: Tetromino): boolean {
 		const blocks = this.getAbsoluteBlocksFor(t);
 		const prevBlocks = this.getAbsoluteBlocksFor(prev);
 
@@ -243,39 +202,6 @@ export default class Game extends EventEmitter {
 		}
 
 		return true;
-	}
-	private spawnNextTetromino() {
-		this.activeTetromino = this.createRandomTetromino();
-	}
-	private getAbsoluteBlocksFor({
-		pos,
-		template,
-		rotation,
-	}: Tetromino): Vector2[] {
-		return template.map((block) => {
-			const newBlock = block.clone;
-
-			switch (rotation) {
-				case 0:
-					break;
-				case 1:
-					newBlock.flip();
-					newBlock.x *= -1;
-					break;
-				case 2:
-					newBlock.scale(-1);
-					break;
-				case 3:
-					newBlock.flip();
-					newBlock.y *= -1;
-					break;
-				default:
-					console.error(`Rotation not in limit: ${rotation}`);
-					break;
-			}
-
-			return newBlock.add(pos);
-		}) as Vector2[];
 	}
 	private removeFullLines() {
 		let fullLines = 0;
@@ -302,17 +228,6 @@ export default class Game extends EventEmitter {
 					this.setPosition(n, this.getPosition(o));
 				}
 			}
-		}
-	}
-
-	private getPosition(pos: ReadonlyVector2): boolean {
-		const { x } = pos;
-		const y = pos.y + this.yOffset;
-
-		try {
-			return this.board[y][x];
-		} catch (e) {
-			throw new Error(`Failed to get position ${pos} ${e}`);
 		}
 	}
 }
