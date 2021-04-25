@@ -1,5 +1,6 @@
 enum ClientMessageType {
 	Move = "move",
+	Restart = "restart",
 	Rotate = "rotate",
 }
 

@@ -1,7 +1,8 @@
 enum ServerMessageType {
-	Board = "board",
+	OpponentBoard = "opponentBoard",
 	Start = "start",
 	Stop = "stop",
+	YourBoard = "yourBoard",
 }
 
 export default ServerMessageType;

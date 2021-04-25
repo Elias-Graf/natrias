@@ -8,7 +8,10 @@ interface Move {
 interface Rotate {
 	type: ClientMessageType.Rotate;
 }
+interface Restart {
+	type: ClientMessageType.Restart;
+}
 
-type ClientMessage = Move | Rotate;
+type ClientMessage = Move | Restart | Rotate;
 
 export default ClientMessage;

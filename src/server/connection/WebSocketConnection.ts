@@ -3,11 +3,12 @@ import { EventEmitter } from "events";
 import WebSocket from "ws";
 import * as http from "http";
 import WebSocketClient from "./WebSocketClient";
-
+import ServerMessage from "shared/ServerMessage";
 export default class WebSocketConnection
 	extends EventEmitter
 	implements Connection {
 	private socket;
+	private clients: WebSocketClient[] = [];
 
 	public constructor() {
 		super();
@@ -15,6 +16,13 @@ export default class WebSocketConnection
 		this.socket = new WebSocket.Server({ port: 4001 });
 
 		this.socket.addListener("connection", this.handleConnect);
+	}
+
+	public broadcast(m: ServerMessage): void {
+		this.sendTo(this.clients, m);
+	}
+	public sendTo(clients: WebSocketClient[], m: ServerMessage): void {
+		for (const client of this.clients) client.send(m);
 	}
 
 	private handleConnect = (
@@ -27,12 +35,14 @@ export default class WebSocketConnection
 
 		const client = new WebSocketClient(clientSocket, ip);
 
+		this.clients.push(client);
 		this.emit("connect", client);
 
 		clientSocket.addListener("close", () => this.handleClose(client));
 		clientSocket.addListener("message", (m) => this.handleMessage(client, m));
 	};
 	private handleClose = (client: WebSocketClient) => {
+		this.clients = this.clients.filter((c) => c !== client);
 		this.emit("disconnect", client);
 	};
 	private handleMessage = (client: WebSocketClient, data: WebSocket.Data) => {

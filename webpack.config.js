@@ -7,6 +7,7 @@ module.exports = {
 		contentBase: path.join(__dirname, './src/client'),
 		port: 9000,
 		watchContentBase: true,
+		host: '0.0.0.0',
 		hot: true,
 	},
 	entry: './src/client/index.ts',
