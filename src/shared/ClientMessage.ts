@@ -1,5 +1,14 @@
 import ClientMessageType from "./ClientMessageType";
+import Dir from "./Dir";
 
-export default interface ClientMessage {
-	type: ClientMessageType;
+interface Move {
+	dir: Dir;
+	type: ClientMessageType.Move;
 }
+interface Rotate {
+	type: ClientMessageType.Rotate;
+}
+
+type ClientMessage = Move | Rotate;
+
+export default ClientMessage;

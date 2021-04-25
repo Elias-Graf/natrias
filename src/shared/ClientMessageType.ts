@@ -1,5 +1,6 @@
 enum ClientMessageType {
-	Board = "board",
+	Move = "move",
+	Rotate = "rotate",
 }
 
 export default ClientMessageType;

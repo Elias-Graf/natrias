@@ -3,8 +3,6 @@ import { Dir, Point2D } from "./globals";
 import { DrawableBlock, DrawableTetromino } from "./drawables";
 import { TemplateType } from "./tetrominoes";
 import { PhysicsEngine, PhysicsInterface } from "./physics";
-import ServerMessageType from "@/shared/ServerMessageType";
-import ServerMessage from "@/shared/ServerMessage";
 
 // TODO: generate UML
 // TODO: different colors
@@ -13,7 +11,6 @@ import ServerMessage from "@/shared/ServerMessage";
 // TODO: next up display
 // TODO: launcher + game over screen
 // TODO: move tetromino.move into physics (this also applies for rotate)
-const socket = new WebSocket("ws://localhost:4001");
 
 export class Natrias {
 	private readonly BLOCK_SIZE = 50;
