@@ -8,7 +8,6 @@ module.exports = {
 		port: 9000,
 		watchContentBase: true,
 		hot: true,
-		quiet: true,
 	},
 	entry: './src/client/index.ts',
 	mode: 'development',
@@ -31,5 +30,3 @@ module.exports = {
 		publicPath: '/build/',
 	},
 };
-
-console.log( path.resolve(__dirname, "src"))
