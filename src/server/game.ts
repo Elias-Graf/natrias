@@ -146,6 +146,36 @@ export default class Game extends EventEmitter {
 			this.lastForceMove = now;
 		}
 	};
+	private getAbsoluteBlocksFor({
+		pos,
+		template,
+		rotation,
+	}: Tetromino): Vector2[] {
+		return template.map((block) => {
+			const newBlock = block.clone;
+
+			switch (rotation) {
+				case 0:
+					break;
+				case 1:
+					newBlock.flip();
+					newBlock.x *= -1;
+					break;
+				case 2:
+					newBlock.scale(-1);
+					break;
+				case 3:
+					newBlock.flip();
+					newBlock.y *= -1;
+					break;
+				default:
+					console.error(`Rotation not in limit: ${rotation}`);
+					break;
+			}
+
+			return newBlock.add(pos);
+		}) as Vector2[];
+	}
 	private getPosition(pos: ReadonlyVector2): boolean {
 		const { x } = pos;
 		const y = pos.y + this.yOffset;
