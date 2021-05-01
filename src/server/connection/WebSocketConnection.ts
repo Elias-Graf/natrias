@@ -4,6 +4,7 @@ import WebSocket from "ws";
 import * as http from "http";
 import WebSocketClient from "./WebSocketClient";
 import ServerMessage from "shared/ServerMessage";
+import Client from "./Client";
 export default class WebSocketConnection
 	extends EventEmitter
 	implements Connection {
@@ -22,7 +23,7 @@ export default class WebSocketConnection
 		this.sendTo(this.clients, m);
 	}
 	public sendTo(clients: WebSocketClient[], m: ServerMessage): void {
-		for (const client of this.clients) client.send(m);
+		for (const client of clients) client.send(m);
 	}
 
 	private handleConnect = (
@@ -36,6 +37,7 @@ export default class WebSocketConnection
 		const client = new WebSocketClient(clientSocket, ip);
 
 		this.clients.push(client);
+		this.printConnected(client);
 		this.emit("connect", client);
 
 		clientSocket.addListener("close", () => this.handleClose(client));
@@ -43,9 +45,16 @@ export default class WebSocketConnection
 	};
 	private handleClose = (client: WebSocketClient) => {
 		this.clients = this.clients.filter((c) => c !== client);
+		this.printDisconnected(client);
 		this.emit("disconnect", client);
 	};
 	private handleMessage = (client: WebSocketClient, data: WebSocket.Data) => {
 		this.emit("message", client, JSON.parse(data.toString()));
 	};
+	private printConnected({ ip, uuid }: Client) {
+		console.log(`Client connected: ${ip} [${uuid}]`);
+	}
+	private printDisconnected({ ip, uuid }: Client) {
+		console.log(`Client disconnected: ${ip} [${uuid}]`);
+	}
 }
