@@ -1,5 +1,4 @@
 import Vector2 from "newton/2d/Vector2";
-import ReadonlyVector2 from "newton/2d/ReadonlyVector2";
 import { EventEmitter } from "events";
 import Dir from "shared/Dir";
 import { random } from "newton/utils/random";
@@ -176,33 +175,26 @@ export default class GameLogic extends EventEmitter {
 			return newBlock.add(pos);
 		}) as Vector2[];
 	}
-	private getPosition(pos: ReadonlyVector2): boolean {
-		const { x } = pos;
-		const y = pos.y + this.yOffset;
-
+	private getPosition(x: number, y: number): boolean {
 		try {
-			return this.board[y][x];
+			return this.board[y + this.yOffset][x];
 		} catch (e) {
-			throw new Error(`Failed to get position ${pos} ${e}`);
+			throw new Error(`Failed to get position [${x}/${y}] ${e}`);
 		}
 	}
-	private setPosition(pos: ReadonlyVector2, block: boolean) {
-		const { x } = pos;
-		let { y } = pos;
-
-		y += this.yOffset;
-
+	private setPosition(x: number, y: number, block: boolean) {
 		try {
-			this.board[y][x] = block;
+			this.board[y + this.yOffset][x] = block;
 		} catch (e) {
-			throw new Error(`Failed to set position ${pos} ${e}`);
+			throw new Error(`Failed to set position [${x}/${y}] ${e}`);
 		}
 	}
 	private setTetromino(t: Tetromino, val: boolean) {
 		const blocks = this.getAbsoluteBlocksFor(t);
 
 		for (const block of blocks) {
-			this.setPosition(block, val);
+			const { x, y } = block;
+			this.setPosition(x, y, val);
 		}
 	}
 	private spawnNextTetromino() {
@@ -228,35 +220,37 @@ export default class GameLogic extends EventEmitter {
 			// We don't need to check further of it was a previous block.
 			if (prevBlocks.find((b) => b.equals(block))) continue;
 
-			if (this.getPosition(block)) return false;
+			const { x, y } = block;
+
+			if (this.getPosition(x, y)) return false;
 		}
 
 		return true;
 	}
 	private removeFullLines() {
-		let fullLines = 0;
+		for (let checkY = this.height - 1; checkY >= 0; checkY--) {
+			let lineIsFull = true;
 
-		for (let y = this.height - 1; y >= 0; y--) {
-			let isFull = true;
-
-			for (let x = 0; x < this.width; x++) {
-				if (!this.getPosition(new Vector2(x, y))) {
-					isFull = false;
+			for (let checkX = 0; checkX < this.width; checkX++) {
+				if (!this.getPosition(checkX, checkY)) {
+					lineIsFull = false;
 					break;
 				}
 			}
 
-			if (isFull) fullLines++;
-		}
+			if (lineIsFull) {
+				// We start moving lines down one above the full line.
+				for (let moveY = checkY - 1; moveY >= 0; moveY--) {
+					for (let moveX = 0; moveX < this.width; moveX++) {
+						const val = this.getPosition(moveX, moveY);
 
-		if (fullLines > 0) {
-			for (let y = this.height - 1 - fullLines; y >= 0; y--) {
-				for (let x = 0; x < this.width; x++) {
-					const o = new Vector2(x, y);
-					const n = o.clone.setY(o.y + fullLines);
-
-					this.setPosition(n, this.getPosition(o));
+						this.setPosition(moveX, moveY + 1, val);
+					}
 				}
+
+				// As the line that was moved down could also be full, we need to check
+				// again.
+				checkY++;
 			}
 		}
 	}
