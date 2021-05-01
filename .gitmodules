@@ -1,3 +1,0 @@
-[submodule "src/newton"]
-	path = src/lib/newton
-	url = https://github.com/Elias-Graf/newton
