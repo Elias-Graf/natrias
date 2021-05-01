@@ -123,7 +123,6 @@ export default class GameLogic extends EventEmitter {
 		return {
 			type: t.type,
 			rotation: t.rotation,
-			template: t.template,
 			pos: t.pos.clone,
 		};
 	}
@@ -131,9 +130,8 @@ export default class GameLogic extends EventEmitter {
 		const type = Math.floor(
 			random(0, Object.keys(templates).length - 1)
 		) as TetrominoType;
-		const template = templates[type];
 
-		return { type, rotation: 0, template, pos: new Vector2(5, -2) };
+		return { type, rotation: 0, pos: new Vector2(5, -2) };
 	}
 	private gameTick = () => {
 		const now = Date.now();
@@ -145,12 +143,8 @@ export default class GameLogic extends EventEmitter {
 			this.lastForceMove = now;
 		}
 	};
-	private getAbsoluteBlocksFor({
-		pos,
-		template,
-		rotation,
-	}: Tetromino): Vector2[] {
-		return template.map((block) => {
+	private getAbsoluteBlocksFor({ pos, type, rotation }: Tetromino): Vector2[] {
+		return templates[type].map((block) => {
 			const newBlock = block.clone;
 
 			switch (rotation) {
