@@ -42,7 +42,7 @@ export default class GameLogic extends EventEmitter {
 		return super.emit(type);
 	}
 	public getBoard(): boolean[][] {
-		return this.board.filter((_, i) => i > this.yOffset);
+		return this.board.filter((_, i) => i >= this.yOffset);
 	}
 	public moveActiveTetromino(direction: Dir): void {
 		const next = this.cloneTetromino(this.activeTetromino);
