@@ -4,8 +4,8 @@
 	"description": "",
 	"private": true,
 	"dependencies": {
-		"newton": "github:Elias-Graf/newton#2b6c6171a69c1474c71865115bfee09ec2cb1eba",
-		"rendery": "github:Elias-Graf/rendery#eb65010059a792eb755f029c442353fd862990c3",
+		"newton": "github:Elias-Graf/newton#main",
+		"rendery": "github:Elias-Graf/rendery#main",
 		"typescript": "^4.2.4",
 		"uuid": "^3.4.0",
 		"ws": "^6.2.1"
