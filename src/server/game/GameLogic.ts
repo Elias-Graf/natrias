@@ -16,7 +16,7 @@ export default class GameLogic extends EventEmitter {
 	private width: number;
 	private yOffset: number;
 	private activeTetromino: Tetromino;
-	private gameTickInterval: NodeJS.Timer;
+	private gameTickInterval: NodeJS.Timer | undefined;
 	private forceMoveDelta = 700;
 	private lastForceMove = Date.now();
 
@@ -31,8 +31,6 @@ export default class GameLogic extends EventEmitter {
 		this.board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
-
-		this.gameTickInterval = setInterval(this.gameTick, 50);
 	}
 
 	public addListener(type: "change", cb: () => void): this {
@@ -115,10 +113,14 @@ export default class GameLogic extends EventEmitter {
 			this.setTetromino(this.activeTetromino, true);
 		}
 	}
+	public startGame(): void {
+		this.gameTickInterval = setInterval(this.gameTick, 50);
+	}
 	public stopGame(): void {
+		if (!this.gameTickInterval) throw new Error("Game not started");
+
 		clearInterval(this.gameTickInterval);
 	}
-
 	private cloneTetromino(t: Tetromino): Tetromino {
 		return {
 			type: t.type,
