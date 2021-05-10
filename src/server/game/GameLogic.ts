@@ -113,10 +113,10 @@ export default class GameLogic extends EventEmitter {
 			this.setTetromino(this.activeTetromino, true);
 		}
 	}
-	public startGame(): void {
+	public start(): void {
 		this.gameTickInterval = setInterval(this.gameTick, 50);
 	}
-	public stopGame(): void {
+	public stop(): void {
 		if (!this.gameTickInterval) throw new Error("Game not started");
 
 		clearInterval(this.gameTickInterval);
