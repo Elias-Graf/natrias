@@ -8,7 +8,9 @@ interface SendOpponentBoard {
 	type: ServerMessageType.OpponentBoard;
 }
 interface StartGame {
+	opponentBoard: Board;
 	type: ServerMessageType.Start;
+	yourBoard: Board;
 }
 interface StopGame {
 	type: ServerMessageType.Stop;
