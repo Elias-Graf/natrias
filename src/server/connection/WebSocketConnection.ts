@@ -9,7 +9,7 @@ export default class WebSocketConnection
 	extends EventEmitter
 	implements Connection {
 	private socket;
-	private clients: WebSocketClient[] = [];
+	private _clients: WebSocketClient[] = [];
 
 	public constructor() {
 		super();
@@ -20,10 +20,14 @@ export default class WebSocketConnection
 	}
 
 	public broadcast(m: ServerMessage): void {
-		this.sendTo(this.clients, m);
+		this.sendTo(this._clients, m);
 	}
 	public sendTo(clients: WebSocketClient[], m: ServerMessage): void {
 		for (const client of clients) client.send(m);
+	}
+
+	public get clients(): Client[] {
+		return this._clients;
 	}
 
 	private handleConnect = (
@@ -36,7 +40,7 @@ export default class WebSocketConnection
 
 		const client = new WebSocketClient(clientSocket, ip);
 
-		this.clients.push(client);
+		this._clients.push(client);
 		this.printConnected(client);
 		this.emit("connect", client);
 
@@ -44,7 +48,7 @@ export default class WebSocketConnection
 		clientSocket.addListener("message", (m) => this.handleMessage(client, m));
 	};
 	private handleClose = (client: WebSocketClient) => {
-		this.clients = this.clients.filter((c) => c !== client);
+		this._clients = this._clients.filter((c) => c !== client);
 		this.printDisconnected(client);
 		this.emit("disconnect", client);
 	};
