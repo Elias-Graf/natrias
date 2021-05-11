@@ -20,7 +20,7 @@ const restartBtn = document.getElementById(
 
 if (!restartBtn) throw new Error("Could not find restart btn");
 
-const server = new WebSocketConnection("ws://localhost:4001");
+const server = new WebSocketConnection(`ws://${window.location.hostname}:4001`);
 const renderer = new CanvasRendery2D(
 	document.body,
 	(BLOCK_SIZE + 1) * 10 * 2,
