@@ -5,20 +5,22 @@ import { random } from "newton/utils/random";
 import templates from "./templates";
 import Tetromino from "./Tetromino";
 import TetrominoType from "./TetrominoType";
+import Board from "shared/Board";
 
 export default class GameLogic extends EventEmitter {
+	private _board: Board;
+	private _nextUp: Tetromino[] = [];
+	private activeTetromino: Tetromino;
 	/**
-	 * Actual height is the board height, plus the yOffset which is offscreen
+	 * Actual height is the board height, plus the yOffset which is offscreen.
 	 */
 	private actualHeight: number;
-	private board: boolean[][];
+	private forceMoveDelta = 700;
+	private gameTickInterval: NodeJS.Timer | undefined;
 	private height: number;
+	private lastForceMove = Date.now();
 	private width: number;
 	private yOffset: number;
-	private activeTetromino: Tetromino;
-	private gameTickInterval: NodeJS.Timer | undefined;
-	private forceMoveDelta = 700;
-	private lastForceMove = Date.now();
 
 	public constructor() {
 		super();
@@ -28,9 +30,11 @@ export default class GameLogic extends EventEmitter {
 		this.yOffset = 5;
 		this.actualHeight = this.height + this.yOffset;
 		this.activeTetromino = this.createRandomTetromino();
-		this.board = new Array(this.actualHeight)
+		this._board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
+
+		this.populateNextUp();
 	}
 
 	public addListener(type: "change", cb: () => void): this {
@@ -39,8 +43,11 @@ export default class GameLogic extends EventEmitter {
 	public emit(type: "change"): boolean {
 		return super.emit(type);
 	}
+	/**
+	 * @deprecated use the `board` property instead.
+	 */
 	public getBoard(): boolean[][] {
-		return this.board.filter((_, i) => i >= this.yOffset);
+		return this._board.filter((_, i) => i >= this.yOffset);
 	}
 	public moveActiveTetromino(direction: Dir): void {
 		const next = this.cloneTetromino(this.activeTetromino);
@@ -61,13 +68,15 @@ export default class GameLogic extends EventEmitter {
 		}
 
 		const nextIsInBounds = this.tetrominoIsInBounds(next);
-		const nextIsClear =
+		const nextIsClearOfOthers =
 			nextIsInBounds &&
+			// This check throws an error if we are out of bounds. So check if we are
+			// in bounds first.
 			this.tetrominoIsClearOfOthers(next, this.activeTetromino);
-		const nextHitTopOfOther = direction === Dir.Down && !nextIsClear;
+		const nextHitTopOfOther = direction === Dir.Down && !nextIsClearOfOthers;
 		const nextHitBottom = direction === Dir.Down && !nextIsInBounds;
 
-		if (nextIsInBounds && nextIsClear) {
+		if (nextIsInBounds && nextIsClearOfOthers) {
 			this.setTetromino(this.activeTetromino, false);
 
 			this.activeTetromino = next;
@@ -121,6 +130,14 @@ export default class GameLogic extends EventEmitter {
 
 		clearInterval(this.gameTickInterval);
 	}
+
+	public get board(): Board {
+		return this._board.filter((_, i) => i >= this.yOffset);
+	}
+	public get nextUp(): Tetromino[] {
+		return this._nextUp;
+	}
+
 	private cloneTetromino(t: Tetromino): Tetromino {
 		return {
 			type: t.type,
@@ -173,14 +190,19 @@ export default class GameLogic extends EventEmitter {
 	}
 	private getPosition(x: number, y: number): boolean {
 		try {
-			return this.board[y + this.yOffset][x];
+			return this._board[y + this.yOffset][x];
 		} catch (e) {
 			throw new Error(`Failed to get position [${x}/${y}] ${e}`);
 		}
 	}
+	private populateNextUp() {
+		this._nextUp = new Array(8)
+			.fill(null)
+			.map(() => this.createRandomTetromino());
+	}
 	private setPosition(x: number, y: number, block: boolean) {
 		try {
-			this.board[y + this.yOffset][x] = block;
+			this._board[y + this.yOffset][x] = block;
 		} catch (e) {
 			throw new Error(`Failed to set position [${x}/${y}] ${e}`);
 		}
@@ -194,7 +216,9 @@ export default class GameLogic extends EventEmitter {
 		}
 	}
 	private spawnNextTetromino() {
-		this.activeTetromino = this.createRandomTetromino();
+		this.activeTetromino = this._nextUp.splice(0, 1)[0];
+
+		this._nextUp.push(this.createRandomTetromino());
 	}
 	private tetrominoIsInBounds(t: Tetromino): boolean {
 		const blocks = this.getAbsoluteBlocksFor(t);

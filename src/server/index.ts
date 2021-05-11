@@ -51,25 +51,35 @@ function createAndStartGames() {
 		if (!opponent) throw new Error("Could not find opponent");
 
 		const opponentGame = games.get(opponent);
-		const yourGame = games.get(player);
+		const playerGame = games.get(player);
 
 		if (!opponentGame) throw new Error("Could not find opponent game");
-		if (!yourGame) throw new Error("Could not find your game");
+		if (!playerGame) throw new Error("Could not find your game");
 
-		const opponentBoard = opponentGame.getBoard();
-		const yourBoard = yourGame.getBoard();
+		const opponentBoard = opponentGame.board;
+		const playerBoard = playerGame.board;
+		const playerNextUp = playerGame.nextUp;
 
-		player.send({ type: ServerMessageType.Start, opponentBoard, yourBoard });
+		player.send({
+			opponentBoard,
+			type: ServerMessageType.Start,
+			yourBoard: playerBoard,
+			yourNextUp: playerNextUp,
+		});
 
-		yourGame.addListener("change", () => {
-			if (!opponent.isOpen) return;
+		playerGame.addListener("change", () => {
+			if (!player.isOpen) return;
 
 			player.send({
-				board: yourBoard,
+				board: playerBoard,
+				nextUp: playerNextUp,
 				type: ServerMessageType.YourBoard,
 			});
+
+			if (!opponent.isOpen) return;
+
 			opponent.send({
-				board: yourBoard,
+				board: playerBoard,
 				opponentId: player.uuid,
 				type: ServerMessageType.OpponentBoard,
 			});
