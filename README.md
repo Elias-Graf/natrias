@@ -4,9 +4,13 @@
 
 Install nodejs: https://nodejs.org/en/
 
-Type `npm install` into terminal to install all dependencies (in the directory of the repository)
+**DO NOT RUN NPM INSTALL.**
 
-## Start Dev Server
-Now run `npm run start:dev` to start the development server
+Run this command
 
-Terminal should output: `Project is running at http://localhost:9000/`, open this website in your preferred flavour of browser.
+```bash
+npm run setup
+```
+
+_Normal npm install does not work:
+https://stackoverflow.com/questions/67507741/postinstall-of-module-is-executed-before-postinstall-of-sub-module._
