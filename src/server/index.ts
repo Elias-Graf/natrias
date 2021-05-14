@@ -57,31 +57,31 @@ function createAndStartGames() {
 		if (!playerGame) throw new Error("Could not find your game");
 
 		const opponentBoard = opponentGame.board;
+		const opponentNextUp = opponentGame.nextUp;
 		const playerBoard = playerGame.board;
 		const playerNextUp = playerGame.nextUp;
 
+		// Notify the player about the game start
 		player.send({
 			opponentBoard,
 			type: ServerMessageType.Start,
 			yourBoard: playerBoard,
 			yourNextUp: playerNextUp,
+			opponentNextUp: opponentNextUp,
 		});
 
 		playerGame.addListener("change", () => {
-			if (!player.isOpen) return;
+			const { board, nextUp } = playerGame;
 
-			player.send({
-				board: playerBoard,
-				nextUp: playerNextUp,
-				type: ServerMessageType.YourBoard,
-			});
+			if (!player.isOpen) return;
+			player.send({ board, nextUp, type: ServerMessageType.YourBoard });
 
 			if (!opponent.isOpen) return;
-
 			opponent.send({
-				board: playerBoard,
+				board,
 				opponentId: player.uuid,
 				type: ServerMessageType.OpponentBoard,
+				nextUp,
 			});
 		});
 	}

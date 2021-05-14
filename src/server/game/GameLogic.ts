@@ -9,7 +9,7 @@ import Board from "shared/Board";
 
 export default class GameLogic extends EventEmitter {
 	private _board: Board;
-	private _nextUp: Tetromino[] = [];
+	private _nextUp: TetrominoType[] = [];
 	private activeTetromino: Tetromino;
 	/**
 	 * Actual height is the board height, plus the yOffset which is offscreen.
@@ -29,7 +29,7 @@ export default class GameLogic extends EventEmitter {
 		this.height = 20;
 		this.yOffset = 5;
 		this.actualHeight = this.height + this.yOffset;
-		this.activeTetromino = this.createRandomTetromino();
+		this.activeTetromino = this.createTetromino(this.getRandomTetrominoType());
 		this._board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
@@ -134,7 +134,7 @@ export default class GameLogic extends EventEmitter {
 	public get board(): Board {
 		return this._board.filter((_, i) => i >= this.yOffset);
 	}
-	public get nextUp(): Tetromino[] {
+	public get nextUp(): TetrominoType[] {
 		return this._nextUp;
 	}
 
@@ -145,11 +145,7 @@ export default class GameLogic extends EventEmitter {
 			pos: t.pos.clone,
 		};
 	}
-	private createRandomTetromino(): Tetromino {
-		const type = Math.floor(
-			random(0, Object.keys(templates).length - 1)
-		) as TetrominoType;
-
+	private createTetromino(type: TetrominoType): Tetromino {
 		return { type, rotation: 0, pos: new Vector2(5, -2) };
 	}
 	private gameTick = () => {
@@ -195,10 +191,15 @@ export default class GameLogic extends EventEmitter {
 			throw new Error(`Failed to get position [${x}/${y}] ${e}`);
 		}
 	}
+	private getRandomTetrominoType() {
+		return Math.floor(
+			random(0, Object.keys(templates).length - 1)
+		) as TetrominoType;
+	}
 	private populateNextUp() {
 		this._nextUp = new Array(8)
 			.fill(null)
-			.map(() => this.createRandomTetromino());
+			.map(() => this.getRandomTetrominoType());
 	}
 	private setPosition(x: number, y: number, block: boolean) {
 		try {
@@ -216,9 +217,9 @@ export default class GameLogic extends EventEmitter {
 		}
 	}
 	private spawnNextTetromino() {
-		this.activeTetromino = this._nextUp.splice(0, 1)[0];
+		this.activeTetromino = this.createTetromino(this._nextUp.splice(0, 1)[0]);
 
-		this._nextUp.push(this.createRandomTetromino());
+		this._nextUp.push(this.getRandomTetrominoType());
 	}
 	private tetrominoIsInBounds(t: Tetromino): boolean {
 		const blocks = this.getAbsoluteBlocksFor(t);
