@@ -1,42 +1,93 @@
 import Drawable2D from "rendery/2d/Drawable2D";
 import Board from "shared/Board";
-import RenderyContext2D from "rendery/2d/RenderyContext2D";
 import BoardRenderer from "./BoardRenderer";
+import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
+import TetrominoType from "server/game/TetrominoType";
+import RenderyContext2D from "rendery/2d/RenderyContext2D";
 
 export default class BoardsRenderer implements Drawable2D {
-	private enemyBoard;
-	private ownBoard;
+	private opponentRenderer;
+	private ownRenderer;
+
+	private readonly ratio = ((10 + 3) * 2) / 20;
 
 	public constructor(
-		private blockSize: number,
 		ownBoard: Board,
-		enemyBoard: Board
+		ownNextUp: TetrominoType[],
+		opponentBoard: Board,
+		opponentNextUp: TetrominoType[]
 	) {
-		this.enemyBoard = new BoardRenderer(blockSize, enemyBoard);
-		this.ownBoard = new BoardRenderer(blockSize, ownBoard);
+		this.opponentRenderer = new BoardRenderer(opponentBoard, ownNextUp);
+		this.ownRenderer = new BoardRenderer(ownBoard, opponentNextUp);
 	}
 
-	// TODO: remove hardcoded size
-	public draw(ctx: RenderyContext2D): void {
-		this.ownBoard.draw(ctx);
+	public draw(ctx: ReadonlyRenderyContext2D): void {
+		const c = inset(center(ctx, ratio(ctx, this.ratio)), 50);
+		c.fill("#FFFFFF22");
 
-		for (let y = 0; y < 20; y++) {
-			ctx.rect(
-				10 * this.blockSize,
-				y * this.blockSize,
-				this.blockSize,
-				this.blockSize,
-				"red"
-			);
-		}
+		const ownCtx = c.clone;
+		ownCtx.width = c.width / 2;
 
-		this.enemyBoard.draw(ctx.clone.translate(this.blockSize * 11, 0));
+		const opponentCtx = ownCtx.clone.translate(ownCtx.width, 0);
+
+		this.ownRenderer.draw(ownCtx);
+		this.opponentRenderer.draw(opponentCtx);
 	}
 
 	public updateOpponentBoard(b: Board): void {
-		this.enemyBoard.setBoard(b);
+		this.opponentRenderer.board = b;
 	}
 	public updateOwnBoard(b: Board): void {
-		this.ownBoard.setBoard(b);
+		this.ownRenderer.board = b;
 	}
+
+	public set ownNextUp(nextUp: TetrominoType[]) {
+		this.ownRenderer.nextUp = nextUp;
+	}
+}
+
+/**
+ * @deprecated
+ */
+function center(
+	container: ReadonlyRenderyContext2D,
+	child: ReadonlyRenderyContext2D
+): RenderyContext2D {
+	const ret = child.clone;
+	const hOff = (container.width - child.width) / 2;
+	const vOff = (container.height - child.height) / 2;
+
+	ret.translate(hOff, vOff);
+
+	return ret;
+}
+/**
+ * @deprecated
+ */
+function inset(
+	ctx: ReadonlyRenderyContext2D,
+	amount: number
+): RenderyContext2D {
+	const ret = ctx.clone;
+
+	ret.translate(amount, amount);
+	ret.height -= amount * 2;
+	ret.width -= amount * 2;
+
+	return ret;
+}
+/**
+ * @deprecated
+ */
+export function ratio(
+	ctx: ReadonlyRenderyContext2D,
+	ratio: number
+): RenderyContext2D {
+	const ret = ctx.clone;
+
+	if (ret.width > ret.height * ratio)
+		ret.width = Math.floor(ratio * ret.height);
+	else ret.height = Math.floor(ret.width / ratio);
+
+	return ret;
 }

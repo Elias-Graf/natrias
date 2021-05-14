@@ -1,19 +1,34 @@
 import Drawable2D from "rendery/2d/Drawable2D";
-import RenderyContext2D from "rendery/2d/RenderyContext2D";
+import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
+import TetrominoType from "server/game/TetrominoType";
 import Board from "shared/Board";
+import NextUpRenderer from "./NextUpRenderer";
 
 export default class BoardRenderer implements Drawable2D {
-	public constructor(private blockSize: number, private board: Board) {}
+	private nextUpRenderer: NextUpRenderer;
 
-	public draw(ctx: RenderyContext2D): void {
-		const { blockSize } = this;
+	public constructor(public board: Board, nextUp: TetrominoType[]) {
+		this.nextUpRenderer = new NextUpRenderer(nextUp);
+	}
+
+	public draw(ctx: ReadonlyRenderyContext2D): void {
+		flex(ctx, [
+			[{ draw: (c) => this.drawBoard(c) }, 6],
+			[this.nextUpRenderer, 2],
+		]);
+	}
+
+	private drawBoard(ctx: ReadonlyRenderyContext2D) {
+		const rCtx = ctx.clone;
+		const blockSize = rCtx.width / 10;
+		rCtx.inRatio(1 / 2);
 
 		for (let y = 0; y < 20; y++) {
 			for (let x = 0; x < 10; x++) {
 				if (this.board[y][x]) {
-					ctx.rect(
-						x * blockSize,
-						y * blockSize,
+					rCtx.rect(
+						Math.floor(x * blockSize),
+						Math.floor(y * blockSize),
 						blockSize,
 						blockSize,
 						"yellow"
@@ -23,7 +38,30 @@ export default class BoardRenderer implements Drawable2D {
 		}
 	}
 
-	public setBoard(board: Board) {
-		this.board = board;
+	public set nextUp(nextUp: TetrominoType[]) {
+		this.nextUpRenderer.nextUp = nextUp;
+	}
+}
+
+/**
+ * @deprecated Move to the rendery context.
+ */
+function flex(
+	ctx: ReadonlyRenderyContext2D,
+	drawables: [drawable: Drawable2D, flex: number][]
+): void {
+	let sections = 0;
+
+	for (const [, f] of drawables) sections += f;
+
+	const oneWidth = ctx.width / sections;
+	const dCtx = ctx.clone;
+
+	for (const [d, f] of drawables) {
+		dCtx.width = f * oneWidth;
+
+		d.draw(dCtx);
+
+		dCtx.translate(dCtx.width, 0);
 	}
 }
