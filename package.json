@@ -32,8 +32,8 @@
 	"scripts": {
 		"client:bundle": "webpack",
 		"client:dev": "webpack serve",
-		"lint": "eslint '*/**/*.ts'",
-		"lint:fix": "eslint '*/**/*.ts' --fix",
+		"lint": "eslint \"*/**/*.ts\"",
+		"lint:fix": "eslint \"*/**/*.ts\" --fix",
 		"server:dev": "npx nodemon --watch src/server/* --ext ts --exec ts-node -r tsconfig-paths/register src/server/index.ts",
 		"setup": "npm install --ignore-scripts && npm install && cd node_modules/newton && npm run postinstall && cd ../rendery && npm run postinstall",
 		"test": "echo \"Error: no test specified\" && exit 1"
