@@ -4,6 +4,9 @@ import Connection from "./connection/Connection";
 import WebSocketConnection from "./connection/WebSocketConnection";
 import Client from "./connection/Client";
 import ClientMessageType from "shared/ClientMessageType";
+import NextUpProvider from "./game/NextUpProvider";
+
+const NEXT_UP_LIST_SIZE = 10;
 
 const connection: Connection = new WebSocketConnection();
 const games = new Map<Client, GameLogic>();
@@ -36,9 +39,10 @@ connection.addListener("message", (client, message) => {
 
 function createAndStartGames() {
 	const { clients } = connection;
+	const nextUpProvider = new NextUpProvider(NEXT_UP_LIST_SIZE);
 
 	for (const player of clients) {
-		const game = new GameLogic();
+		const game = new GameLogic(nextUpProvider);
 
 		games.set(player, game);
 
@@ -57,9 +61,9 @@ function createAndStartGames() {
 		if (!playerGame) throw new Error("Could not find your game");
 
 		const opponentBoard = opponentGame.board;
-		const opponentNextUp = opponentGame.nextUp;
+		const opponentNextUp = getNextUpListForGame(opponentGame, nextUpProvider);
 		const playerBoard = playerGame.board;
-		const playerNextUp = playerGame.nextUp;
+		const playerNextUp = getNextUpListForGame(playerGame, nextUpProvider);
 
 		// Notify the player about the game start
 		player.send({
@@ -71,7 +75,8 @@ function createAndStartGames() {
 		});
 
 		playerGame.addListener("change", () => {
-			const { board, nextUp } = playerGame;
+			const { board } = playerGame;
+			const nextUp = getNextUpListForGame(playerGame, nextUpProvider);
 
 			if (!player.isOpen) return;
 			player.send({ board, nextUp, type: ServerMessageType.YourBoard });
@@ -96,4 +101,11 @@ function stopAllGames() {
 			games.delete(player);
 		}
 	}
+}
+
+function getNextUpListForGame(
+	{ nextUpIndex }: GameLogic,
+	{ nextUpList }: NextUpProvider
+) {
+	return nextUpList.slice(nextUpIndex, nextUpIndex + NEXT_UP_LIST_SIZE);
 }

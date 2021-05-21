@@ -1,15 +1,13 @@
 import { EventEmitter } from "events";
 import Dir from "shared/Dir";
-import { random } from "newton/utils/random";
-import TEMPLATES from "./templates";
-import TetrominoType from "./TetrominoType";
 import Board from "shared/Board";
 import TetrominoLogic from "./TetrominoLogic";
 import { createTetrominoFromType } from "./createTetrominoFromType";
+import NextUpProvider from "./NextUpProvider";
 
 export default class GameLogic extends EventEmitter {
 	private _board: Board;
-	private _nextUp: TetrominoType[] = [];
+	private _nextUpIndex = 0;
 	private activeTetromino: TetrominoLogic;
 	/**
 	 * Actual height is the board height, plus the yOffset which is offscreen.
@@ -22,21 +20,18 @@ export default class GameLogic extends EventEmitter {
 	private width: number;
 	private yOffset: number;
 
-	public constructor() {
+	public constructor(private nextUpProvider: NextUpProvider) {
 		super();
 
 		this.width = 10;
 		this.height = 20;
 		this.yOffset = 5;
 		this.actualHeight = this.height + this.yOffset;
-		this.activeTetromino = createTetrominoFromType(
-			this.getRandomTetrominoType()
-		);
 		this._board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
 
-		this.populateNextUp();
+		this.activeTetromino = this.getNextTetromino();
 	}
 
 	public addListener(type: "change", cb: () => void): this {
@@ -86,7 +81,7 @@ export default class GameLogic extends EventEmitter {
 			this.setTetromino(this.activeTetromino, true);
 		} else if (nextHitBottom || nextHitTopOfOther) {
 			this.removeFullLines();
-			this.spawnNextTetromino();
+			this.activeTetromino = this.getNextTetromino();
 		}
 	}
 	public removeListener(type: "change", cb: () => void): this {
@@ -120,8 +115,8 @@ export default class GameLogic extends EventEmitter {
 	public get board(): Board {
 		return this._board.filter((_, i) => i >= this.yOffset);
 	}
-	public get nextUp(): TetrominoType[] {
-		return this._nextUp;
+	public get nextUpIndex(): number {
+		return this._nextUpIndex;
 	}
 
 	private gameTick = () => {
@@ -141,16 +136,6 @@ export default class GameLogic extends EventEmitter {
 			throw new Error(`Failed to get position [${x}/${y}] ${e}`);
 		}
 	}
-	private getRandomTetrominoType() {
-		return Math.floor(
-			random(0, Object.keys(TEMPLATES).length - 1)
-		) as TetrominoType;
-	}
-	private populateNextUp() {
-		this._nextUp = new Array(8)
-			.fill(null)
-			.map(() => this.getRandomTetrominoType());
-	}
 	private setPosition(x: number, y: number, block: boolean) {
 		try {
 			this._board[y + this.yOffset][x] = block;
@@ -164,14 +149,15 @@ export default class GameLogic extends EventEmitter {
 			this.setPosition(x, y, val);
 		}
 	}
-	private spawnNextTetromino() {
-		this.activeTetromino = createTetrominoFromType(
-			this._nextUp.splice(0, 1)[0]
-		);
-		this._nextUp.push(this.getRandomTetrominoType());
+	private getNextTetromino(): TetrominoLogic {
+		const next = this.nextUpProvider.get(this._nextUpIndex);
+
+		this._nextUpIndex++;
+
+		return createTetrominoFromType(next);
 	}
-	private tetrominoIsInBounds(t: TetrominoLogic): boolean {
-		for (const { x, y } of t.blocks) {
+	private tetrominoIsInBounds({ blocks }: TetrominoLogic): boolean {
+		for (const { x, y } of blocks) {
 			const isInBounds =
 				x >= 0 && x < this.width && y > -this.yOffset && y < this.height;
 
