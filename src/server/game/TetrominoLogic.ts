@@ -4,7 +4,7 @@ import Tetromino from "./Tetromino";
 import TetrominoType from "./TetrominoType";
 
 export default abstract class TetrominoLogic implements Tetromino {
-	public pos = new Vector2(0, 0);
+	public pos = new Vector2(5, 0);
 
 	protected _rotation = 0;
 
