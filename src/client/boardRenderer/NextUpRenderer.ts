@@ -1,6 +1,6 @@
 import Drawable2D from "rendery/2d/Drawable2D";
 import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
-import templates from "server/game/templates";
+import TEMPLATES from "server/game/templates";
 import TetrominoType from "server/game/TetrominoType";
 
 export default class NextUpRenderer implements Drawable2D {
@@ -16,7 +16,7 @@ export default class NextUpRenderer implements Drawable2D {
 		for (const next of this.nextUp) {
 			const { height, xMin, yMin } = this.getDimensionOfTetrominoType(next);
 
-			for (const { x: bX, y: bY } of templates[next]) {
+			for (const { x: bX, y: bY } of TEMPLATES[next]) {
 				const yCompensateForNegative = bY - yMin;
 				const xCompensateForNegative = bX - xMin;
 				const x = xCompensateForNegative * blockSize;
@@ -43,7 +43,7 @@ export default class NextUpRenderer implements Drawable2D {
 		let yMax = 0;
 		let yMin = 0;
 
-		for (const { x, y } of templates[type]) {
+		for (const { x, y } of TEMPLATES[type]) {
 			if (x > xMax) xMax = x;
 			if (x < xMin) xMin = x;
 			if (y > yMax) yMax = y;

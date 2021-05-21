@@ -1,16 +1,16 @@
-import Vector2 from "newton/2d/Vector2";
 import { EventEmitter } from "events";
 import Dir from "shared/Dir";
 import { random } from "newton/utils/random";
-import templates from "./templates";
-import Tetromino from "./Tetromino";
+import TEMPLATES from "./templates";
 import TetrominoType from "./TetrominoType";
 import Board from "shared/Board";
+import TetrominoLogic from "./TetrominoLogic";
+import { createTetrominoFromType } from "./createTetrominoFromType";
 
 export default class GameLogic extends EventEmitter {
 	private _board: Board;
 	private _nextUp: TetrominoType[] = [];
-	private activeTetromino: Tetromino;
+	private activeTetromino: TetrominoLogic;
 	/**
 	 * Actual height is the board height, plus the yOffset which is offscreen.
 	 */
@@ -29,7 +29,9 @@ export default class GameLogic extends EventEmitter {
 		this.height = 20;
 		this.yOffset = 5;
 		this.actualHeight = this.height + this.yOffset;
-		this.activeTetromino = this.createTetromino(this.getRandomTetrominoType());
+		this.activeTetromino = createTetrominoFromType(
+			this.getRandomTetrominoType()
+		);
 		this._board = new Array(this.actualHeight)
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
@@ -50,7 +52,7 @@ export default class GameLogic extends EventEmitter {
 		return this._board.filter((_, i) => i >= this.yOffset);
 	}
 	public moveActiveTetromino(direction: Dir): void {
-		const next = this.cloneTetromino(this.activeTetromino);
+		const next = this.activeTetromino.clone;
 
 		switch (direction) {
 			case Dir.Down:
@@ -90,26 +92,10 @@ export default class GameLogic extends EventEmitter {
 	public removeListener(type: "change", cb: () => void): this {
 		return super.addListener(type, cb);
 	}
-	public rotateActiveTetromino(amount = 1): void {
-		const next = this.cloneTetromino(this.activeTetromino);
+	public rotateActiveTetromino(): void {
+		const next = this.activeTetromino.clone;
 
-		next.rotation += amount;
-
-		// We don't want to rotate the O shape
-		if (next.type === TetrominoType.O) return;
-
-		switch (next.type) {
-			// Some shapes only need two rotations
-			case TetrominoType.I:
-			case TetrominoType.S:
-			case TetrominoType.Z:
-				if (next.rotation > 1) next.rotation = 0;
-				if (next.rotation < 0) next.rotation = 1;
-				break;
-			default:
-				if (next.rotation > 3) next.rotation = 0;
-				if (next.rotation < 0) next.rotation = 3;
-		}
+		next.rotate();
 
 		if (
 			this.tetrominoIsClearOfOthers(next, this.activeTetromino) &&
@@ -138,16 +124,6 @@ export default class GameLogic extends EventEmitter {
 		return this._nextUp;
 	}
 
-	private cloneTetromino(t: Tetromino): Tetromino {
-		return {
-			type: t.type,
-			rotation: t.rotation,
-			pos: t.pos.clone,
-		};
-	}
-	private createTetromino(type: TetrominoType): Tetromino {
-		return { type, rotation: 0, pos: new Vector2(5, -2) };
-	}
 	private gameTick = () => {
 		const now = Date.now();
 
@@ -158,32 +134,6 @@ export default class GameLogic extends EventEmitter {
 			this.lastForceMove = now;
 		}
 	};
-	private getAbsoluteBlocksFor({ pos, type, rotation }: Tetromino): Vector2[] {
-		return templates[type].map((block) => {
-			const newBlock = block.clone;
-
-			switch (rotation) {
-				case 0:
-					break;
-				case 1:
-					newBlock.flip();
-					newBlock.x *= -1;
-					break;
-				case 2:
-					newBlock.scale(-1);
-					break;
-				case 3:
-					newBlock.flip();
-					newBlock.y *= -1;
-					break;
-				default:
-					console.error(`Rotation not in limit: ${rotation}`);
-					break;
-			}
-
-			return newBlock.add(pos);
-		}) as Vector2[];
-	}
 	private getPosition(x: number, y: number): boolean {
 		try {
 			return this._board[y + this.yOffset][x];
@@ -193,7 +143,7 @@ export default class GameLogic extends EventEmitter {
 	}
 	private getRandomTetrominoType() {
 		return Math.floor(
-			random(0, Object.keys(templates).length - 1)
+			random(0, Object.keys(TEMPLATES).length - 1)
 		) as TetrominoType;
 	}
 	private populateNextUp() {
@@ -208,23 +158,20 @@ export default class GameLogic extends EventEmitter {
 			throw new Error(`Failed to set position [${x}/${y}] ${e}`);
 		}
 	}
-	private setTetromino(t: Tetromino, val: boolean) {
-		const blocks = this.getAbsoluteBlocksFor(t);
-
+	private setTetromino({ blocks }: TetrominoLogic, val: boolean) {
 		for (const block of blocks) {
 			const { x, y } = block;
 			this.setPosition(x, y, val);
 		}
 	}
 	private spawnNextTetromino() {
-		this.activeTetromino = this.createTetromino(this._nextUp.splice(0, 1)[0]);
-
+		this.activeTetromino = createTetrominoFromType(
+			this._nextUp.splice(0, 1)[0]
+		);
 		this._nextUp.push(this.getRandomTetrominoType());
 	}
-	private tetrominoIsInBounds(t: Tetromino): boolean {
-		const blocks = this.getAbsoluteBlocksFor(t);
-
-		for (const { x, y } of blocks) {
+	private tetrominoIsInBounds(t: TetrominoLogic): boolean {
+		for (const { x, y } of t.blocks) {
 			const isInBounds =
 				x >= 0 && x < this.width && y > -this.yOffset && y < this.height;
 
@@ -233,9 +180,12 @@ export default class GameLogic extends EventEmitter {
 
 		return true;
 	}
-	private tetrominoIsClearOfOthers(t: Tetromino, prev: Tetromino): boolean {
-		const blocks = this.getAbsoluteBlocksFor(t);
-		const prevBlocks = this.getAbsoluteBlocksFor(prev);
+	private tetrominoIsClearOfOthers(
+		t: TetrominoLogic,
+		prev: TetrominoLogic
+	): boolean {
+		const blocks = t.blocks;
+		const prevBlocks = prev.blocks;
 
 		for (const block of blocks) {
 			// We don't need to check further of it was a previous block.
