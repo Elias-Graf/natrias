@@ -1,4 +1,4 @@
-import TetrominoType from "server/game/TetrominoType";
+import TetrominoType from "shared/TetrominoType";
 import Board from "./Board";
 import ServerMessageType from "./ServerMessageType";
 import UUID from "./UUID";

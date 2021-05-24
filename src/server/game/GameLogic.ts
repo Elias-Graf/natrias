@@ -4,7 +4,7 @@ import Board from "shared/Board";
 import TetrominoLogic from "./TetrominoLogic";
 import { createTetrominoFromType } from "./createTetrominoFromType";
 import NextUpProvider from "./NextUpProvider";
-import TetrominoType from "./TetrominoType";
+import TetrominoType from "shared/TetrominoType";
 
 export default class GameLogic extends EventEmitter {
 	private _board: Board;
@@ -49,42 +49,24 @@ export default class GameLogic extends EventEmitter {
 	public getBoard(): boolean[][] {
 		return this._board.filter((_, i) => i >= this.yOffset);
 	}
-	public moveActiveTetromino(direction: Dir): void {
-		const next = this.activeTetromino.clone;
+	public moveActiveTetromino(dir: Dir): void {
+		const { activeTetromino } = this;
 
-		// TODO: move this to the tetromino logic
-		switch (direction) {
-			case Dir.Down:
-				next.pos.y += 1;
-				break;
-			case Dir.Left:
-				next.pos.x -= 1;
-				break;
-			case Dir.Right:
-				next.pos.x += 1;
-				break;
-			case Dir.Up:
-				console.warn("Cannot move active tetromino up [NOOP]");
-				return;
-		}
+		const next = activeTetromino.clone;
+		next.move(dir);
 
-		const nextIsInBounds = this.tetrominoIsInBounds(next);
-		const nextIsClearOfOthers =
-			nextIsInBounds &&
-			// This check throws an error if we are out of bounds. So check if we are
-			// in bounds first.
-			this.tetrominoIsClearOfOthers(next, this.activeTetromino);
-		const nextHitTopOfOther = direction === Dir.Down && !nextIsClearOfOthers;
-		const nextHitBottom = direction === Dir.Down && !nextIsInBounds;
+		const newPositionIsValid =
+			this.tetrominoIsInBounds(next) &&
+			this.tetrominoIsClearOfOthers(next, activeTetromino);
+		const newPositionIsBottomOrTopOfOther =
+			dir === Dir.Down && !newPositionIsValid;
 
-		if (nextIsInBounds && nextIsClearOfOthers) {
-			const { activeTetromino } = this;
-
+		if (newPositionIsValid) {
 			this.activeTetromino = next;
 			this.setTetromino(activeTetromino, false);
 			this.setTetromino(this.activeTetromino, true);
 			this.emitChange();
-		} else if (nextHitBottom || nextHitTopOfOther) {
+		} else if (newPositionIsBottomOrTopOfOther) {
 			this.removeFullLines();
 			this.spawnNextTetromino();
 			this.emitChange();

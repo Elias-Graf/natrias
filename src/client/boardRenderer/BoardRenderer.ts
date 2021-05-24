@@ -1,6 +1,6 @@
 import Drawable2D from "rendery/2d/Drawable2D";
 import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
-import TetrominoType from "server/game/TetrominoType";
+import TetrominoType from "shared/TetrominoType";
 import Board from "shared/Board";
 import HoldingPieceRenderer from "./HoldingPieceRenderer";
 import NextUpRenderer from "./NextUpRenderer";
@@ -22,19 +22,17 @@ export default class BoardRenderer implements Drawable2D {
 	}
 
 	private drawBoard(ctx: ReadonlyRenderyContext2D) {
-		const rCtx = ctx.clone;
-		const blockSize = rCtx.width / 10;
-		rCtx.inRatio(1 / 2);
-		rCtx.fill("#000000AA");
+		const rCtx = ctx.clone.inRatio(1 / 2).inset(10);
+		const blockSize = rCtx.height / 20;
 
 		for (let y = 0; y < 20; y++) {
 			for (let x = 0; x < 10; x++) {
 				if (this.board[y][x]) {
 					rCtx.rect(
-						Math.floor(x * blockSize),
-						Math.floor(y * blockSize),
-						blockSize,
-						blockSize,
+						Math.round(x * blockSize),
+						Math.round(y * blockSize),
+						Math.round(blockSize),
+						Math.round(blockSize),
 						"yellow"
 					);
 				}
@@ -51,6 +49,7 @@ export default class BoardRenderer implements Drawable2D {
 }
 
 /**
+ * TODO: move this to the rendery context.
  * @deprecated Move to the rendery context.
  */
 function flex(

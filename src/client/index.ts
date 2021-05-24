@@ -50,9 +50,9 @@ const handleMessage = (msg: ServerMessage) => {
 				return;
 			}
 
+			boardsRenderer.opponentBoard = board;
 			boardsRenderer.opponentHoldingPiece = holdingPiece;
 			boardsRenderer.opponentNextUp = nextUp;
-			boardsRenderer.updateOpponentBoard(board);
 			break;
 		}
 		case ServerMessageType.Start:
@@ -84,7 +84,7 @@ const handleMessage = (msg: ServerMessage) => {
 				return;
 			}
 
-			boardsRenderer.updateOwnBoard(board);
+			boardsRenderer.ownBoard = board;
 			boardsRenderer.ownHoldingPiece = holdingPiece;
 			boardsRenderer.ownNextUp = nextUp;
 			break;

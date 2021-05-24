@@ -1,6 +1,7 @@
 import Vector2 from "newton/2d/Vector2";
 import ReadonlyVector2 from "newton/2d/ReadonlyVector2";
-import TetrominoType from "./TetrominoType";
+import TetrominoType from "shared/TetrominoType";
+import getDimensionsOfTemplate from "shared/getDimensionsOfTemplate";
 
 const TEMPLATE_I: ReadonlyVector2[] = [
 	new Vector2(0, 2),
@@ -79,11 +80,8 @@ export function debugTemplate(
 		if (y < minY) minY = y;
 	}
 
-	// The "0" block is also a block, thus + 1.
-	// TODO: Use function `shared/getDimensionsOfTemplate`
-	const width = maxX - minX + 1;
-	const height = maxY - minY + 1;
-	const offset = new Vector2(minX, minY);
+	const { height, xMin, yMin, width } = getDimensionsOfTemplate(template);
+	const offset = new Vector2(xMin, yMin);
 	const board = new Array(height)
 		.fill(null)
 		.map(() => new Array(width).fill(null).map(() => "o"));
@@ -91,11 +89,7 @@ export function debugTemplate(
 	for (const block of template) {
 		const { x, y } = block.clone.sub(offset);
 
-		try {
-			board[y][x] = "x";
-		} catch (e) {
-			console.log(x, y, e);
-		}
+		board[y][x] = "x";
 	}
 
 	print([

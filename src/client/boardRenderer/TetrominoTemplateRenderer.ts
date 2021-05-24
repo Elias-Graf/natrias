@@ -1,7 +1,7 @@
 import Drawable2D from "rendery/2d/Drawable2D";
 import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
-import TEMPLATES from "server/game/templates";
-import TetrominoType from "server/game/TetrominoType";
+import TEMPLATES from "shared/templates";
+import TetrominoType from "shared/TetrominoType";
 import getDimensionsOfTemplate from "shared/getDimensionsOfTemplate";
 
 export default class TetrominoTemplateRenderer implements Drawable2D {

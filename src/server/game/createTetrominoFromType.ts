@@ -1,4 +1,4 @@
-import TetrominoType from "./TetrominoType";
+import TetrominoType from "shared/TetrominoType";
 import TwoRotationTetromino from "./TwoRotationTetromino";
 import NoRotationTetromino from "./NoRotationTetromino";
 import TetrominoLogic from "./TetrominoLogic";

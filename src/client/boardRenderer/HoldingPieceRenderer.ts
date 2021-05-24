@@ -1,6 +1,6 @@
 import Drawable2D from "rendery/2d/Drawable2D";
 import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
-import TetrominoType from "server/game/TetrominoType";
+import TetrominoType from "shared/TetrominoType";
 import TetrominoTemplateRenderer from "./TetrominoTemplateRenderer";
 
 export default class HoldingPieceRenderer implements Drawable2D {

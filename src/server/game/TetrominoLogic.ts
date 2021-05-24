@@ -1,7 +1,8 @@
 import Vector2 from "newton/2d/Vector2";
-import TEMPLATES from "./templates";
+import TEMPLATES from "shared/templates";
 import Tetromino from "./Tetromino";
-import TetrominoType from "./TetrominoType";
+import TetrominoType from "shared/TetrominoType";
+import Dir from "shared/Dir";
 
 export default abstract class TetrominoLogic implements Tetromino {
 	public pos = new Vector2(5, 0);
@@ -14,6 +15,23 @@ export default abstract class TetrominoLogic implements Tetromino {
 
 	public abstract get clone(): TetrominoLogic;
 
+	public move(dir: Dir): void {
+		switch (dir) {
+			case Dir.Down:
+				this.pos.y += 1;
+				break;
+			case Dir.Left:
+				this.pos.x -= 1;
+				break;
+			case Dir.Right:
+				this.pos.x += 1;
+				break;
+			case Dir.Up:
+				console.warn("[NOOP] Cannot move up.");
+				return;
+		}
+	}
+
 	public get rotation(): number {
 		return this._rotation;
 	}
@@ -22,7 +40,6 @@ export default abstract class TetrominoLogic implements Tetromino {
 			`Do not set rotation on ${TetrominoLogic.name}. Use the "rotate" method`
 		);
 	}
-
 	public get blocks(): Vector2[] {
 		const { rotation, type, pos } = this;
 

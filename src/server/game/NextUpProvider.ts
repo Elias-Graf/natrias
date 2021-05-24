@@ -1,6 +1,6 @@
 import { random } from "newton/utils/random";
-import TEMPLATES from "./templates";
-import TetrominoType from "./TetrominoType";
+import TEMPLATES from "shared/templates";
+import TetrominoType from "shared/TetrominoType";
 
 export default class NextUpProvider {
 	private _nextUpList: TetrominoType[] = [];
