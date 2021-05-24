@@ -4,10 +4,12 @@ import Board from "shared/Board";
 import TetrominoLogic from "./TetrominoLogic";
 import { createTetrominoFromType } from "./createTetrominoFromType";
 import NextUpProvider from "./NextUpProvider";
+import TetrominoType from "./TetrominoType";
 
 export default class GameLogic extends EventEmitter {
 	private _board: Board;
 	private _nextUpIndex = 0;
+	private _holdingPiece: TetrominoType | undefined;
 	private activeTetromino: TetrominoLogic;
 	/**
 	 * Actual height is the board height, plus the yOffset which is offscreen.
@@ -17,6 +19,7 @@ export default class GameLogic extends EventEmitter {
 	private gameTickInterval: NodeJS.Timer | undefined;
 	private height: number;
 	private lastForceMove = Date.now();
+	private switchedThisTurn = false;
 	private width: number;
 	private yOffset: number;
 
@@ -31,14 +34,14 @@ export default class GameLogic extends EventEmitter {
 			.fill(false)
 			.map(() => new Array(this.width).fill(false));
 
-		this.activeTetromino = this.getNextTetromino();
+		// We sadly need this assignment event though we already assigned
+		// "activeTetromino" inside "spawnNextTetromino". Typescript is not
+		// capable of detecting this.
+		this.activeTetromino = this.spawnNextTetromino();
 	}
 
 	public addListener(type: "change", cb: () => void): this {
 		return super.addListener(type, cb);
-	}
-	public emit(type: "change"): boolean {
-		return super.emit(type);
 	}
 	/**
 	 * @deprecated use the `board` property instead.
@@ -49,6 +52,7 @@ export default class GameLogic extends EventEmitter {
 	public moveActiveTetromino(direction: Dir): void {
 		const next = this.activeTetromino.clone;
 
+		// TODO: move this to the tetromino logic
 		switch (direction) {
 			case Dir.Down:
 				next.pos.y += 1;
@@ -74,14 +78,16 @@ export default class GameLogic extends EventEmitter {
 		const nextHitBottom = direction === Dir.Down && !nextIsInBounds;
 
 		if (nextIsInBounds && nextIsClearOfOthers) {
-			this.setTetromino(this.activeTetromino, false);
+			const { activeTetromino } = this;
 
 			this.activeTetromino = next;
-
+			this.setTetromino(activeTetromino, false);
 			this.setTetromino(this.activeTetromino, true);
+			this.emitChange();
 		} else if (nextHitBottom || nextHitTopOfOther) {
 			this.removeFullLines();
-			this.activeTetromino = this.getNextTetromino();
+			this.spawnNextTetromino();
+			this.emitChange();
 		}
 	}
 	public removeListener(type: "change", cb: () => void): this {
@@ -101,6 +107,8 @@ export default class GameLogic extends EventEmitter {
 			this.activeTetromino = next;
 
 			this.setTetromino(this.activeTetromino, true);
+
+			this.emitChange();
 		}
 	}
 	public start(): void {
@@ -111,6 +119,24 @@ export default class GameLogic extends EventEmitter {
 
 		clearInterval(this.gameTickInterval);
 	}
+	/**
+	 * Switches the active tetromino with the holding piece.
+	 */
+	public switchWithHoldingPiece(): void {
+		const { _holdingPiece, activeTetromino } = this;
+
+		if (this.switchedThisTurn) return;
+
+		this.setTetromino(activeTetromino, false);
+		this._holdingPiece = activeTetromino.type;
+
+		if (_holdingPiece !== undefined)
+			this.activeTetromino = createTetrominoFromType(_holdingPiece);
+		else this.spawnNextTetromino();
+
+		this.switchedThisTurn = true;
+		this.emitChange();
+	}
 
 	public get board(): Board {
 		return this._board.filter((_, i) => i >= this.yOffset);
@@ -118,7 +144,13 @@ export default class GameLogic extends EventEmitter {
 	public get nextUpIndex(): number {
 		return this._nextUpIndex;
 	}
+	public get holdingPiece(): TetrominoType | undefined {
+		return this._holdingPiece;
+	}
 
+	private emitChange() {
+		this.emit("change");
+	}
 	private gameTick = () => {
 		const now = Date.now();
 
@@ -136,6 +168,33 @@ export default class GameLogic extends EventEmitter {
 			throw new Error(`Failed to get position [${x}/${y}] ${e}`);
 		}
 	}
+	private removeFullLines() {
+		for (let checkY = this.height - 1; checkY >= 0; checkY--) {
+			let lineIsFull = true;
+
+			for (let checkX = 0; checkX < this.width; checkX++) {
+				if (!this.getPosition(checkX, checkY)) {
+					lineIsFull = false;
+					break;
+				}
+			}
+
+			if (lineIsFull) {
+				// We start moving lines down one above the full line.
+				for (let moveY = checkY - 1; moveY >= 0; moveY--) {
+					for (let moveX = 0; moveX < this.width; moveX++) {
+						const val = this.getPosition(moveX, moveY);
+
+						this.setPosition(moveX, moveY + 1, val);
+					}
+				}
+
+				// As the line that was moved down could also be full, we need to check
+				// again.
+				checkY++;
+			}
+		}
+	}
 	private setPosition(x: number, y: number, block: boolean) {
 		try {
 			this._board[y + this.yOffset][x] = block;
@@ -149,12 +208,16 @@ export default class GameLogic extends EventEmitter {
 			this.setPosition(x, y, val);
 		}
 	}
-	private getNextTetromino(): TetrominoLogic {
-		const next = this.nextUpProvider.get(this._nextUpIndex);
+	private spawnNextTetromino() {
+		const { nextUpProvider, _nextUpIndex } = this;
+		const next = nextUpProvider.get(_nextUpIndex);
 
 		this._nextUpIndex++;
 
-		return createTetrominoFromType(next);
+		// Next tetromino means new turn, so reset that flag.
+		this.switchedThisTurn = false;
+
+		return (this.activeTetromino = createTetrominoFromType(next));
 	}
 	private tetrominoIsInBounds({ blocks }: TetrominoLogic): boolean {
 		for (const { x, y } of blocks) {
@@ -183,32 +246,5 @@ export default class GameLogic extends EventEmitter {
 		}
 
 		return true;
-	}
-	private removeFullLines() {
-		for (let checkY = this.height - 1; checkY >= 0; checkY--) {
-			let lineIsFull = true;
-
-			for (let checkX = 0; checkX < this.width; checkX++) {
-				if (!this.getPosition(checkX, checkY)) {
-					lineIsFull = false;
-					break;
-				}
-			}
-
-			if (lineIsFull) {
-				// We start moving lines down one above the full line.
-				for (let moveY = checkY - 1; moveY >= 0; moveY--) {
-					for (let moveX = 0; moveX < this.width; moveX++) {
-						const val = this.getPosition(moveX, moveY);
-
-						this.setPosition(moveX, moveY + 1, val);
-					}
-				}
-
-				// As the line that was moved down could also be full, we need to check
-				// again.
-				checkY++;
-			}
-		}
 	}
 }

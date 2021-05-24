@@ -12,6 +12,13 @@ const keyToDirectory: ReadonlyMap<string, Dir> = new Map([
 	["ArrowRight", Dir.Right],
 	["ArrowUp", Dir.Up],
 ]);
+const knownKeys = new Set([
+	"ArrowDown",
+	"ArrowLeft",
+	"ArrowRight",
+	"ArrowUp",
+	"n",
+]);
 
 const server = new WebSocketConnection(`ws://${window.location.hostname}:4001`);
 const renderer = new CanvasRendery2D(document.body, 0, 0, "#000000").dynamic;
@@ -19,26 +26,35 @@ const renderer = new CanvasRendery2D(document.body, 0, 0, "#000000").dynamic;
 let boardsRenderer: BoardsRenderer | undefined;
 
 const handleKeyPress = (e: KeyboardEvent) => {
-	const dir = keyToDirectory.get(e.key);
+	const { key } = e;
+
+	if (!knownKeys.has(key)) return;
+	// We don't want to browser to scroll or anything else.
+	e.preventDefault();
+
+	const dir = keyToDirectory.get(key);
 
 	if (dir) {
-		// We don't want to browser to scroll or anything else.
-		e.preventDefault();
-
 		if (dir === Dir.Up) server.send({ type: ClientMessageType.Rotate });
 		else server.send({ type: ClientMessageType.Move, dir });
-	}
+	} else if (key === "n")
+		server.send({ type: ClientMessageType.SwitchWithHoldingPiece });
 };
 const handleMessage = (msg: ServerMessage) => {
 	switch (msg.type) {
-		case ServerMessageType.OpponentBoard:
+		case ServerMessageType.OpponentBoard: {
+			const { board, nextUp, holdingPiece } = msg;
+
 			if (!boardsRenderer) {
 				console.error("Received opponent board but no board renderer present");
 				return;
 			}
 
-			boardsRenderer.updateOpponentBoard(msg.board);
+			boardsRenderer.opponentHoldingPiece = holdingPiece;
+			boardsRenderer.opponentNextUp = nextUp;
+			boardsRenderer.updateOpponentBoard(board);
 			break;
+		}
 		case ServerMessageType.Start:
 			const { yourBoard, opponentBoard, yourNextUp, opponentNextUp } = msg;
 
@@ -60,8 +76,8 @@ const handleMessage = (msg: ServerMessage) => {
 		case ServerMessageType.Stop:
 			console.log("Game stopped");
 			break;
-		case ServerMessageType.YourBoard:
-			const { board, nextUp } = msg;
+		case ServerMessageType.YourBoard: {
+			const { board, nextUp, holdingPiece } = msg;
 
 			if (!boardsRenderer) {
 				console.error("Received your board but no board renderer present");
@@ -69,8 +85,10 @@ const handleMessage = (msg: ServerMessage) => {
 			}
 
 			boardsRenderer.updateOwnBoard(board);
+			boardsRenderer.ownHoldingPiece = holdingPiece;
 			boardsRenderer.ownNextUp = nextUp;
 			break;
+		}
 	}
 };
 

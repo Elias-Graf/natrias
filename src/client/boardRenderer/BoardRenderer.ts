@@ -2,10 +2,12 @@ import Drawable2D from "rendery/2d/Drawable2D";
 import ReadonlyRenderyContext2D from "rendery/2d/ReadonlyRenderyContext2D";
 import TetrominoType from "server/game/TetrominoType";
 import Board from "shared/Board";
+import HoldingPieceRenderer from "./HoldingPieceRenderer";
 import NextUpRenderer from "./NextUpRenderer";
 
 export default class BoardRenderer implements Drawable2D {
 	private nextUpRenderer: NextUpRenderer;
+	private holdingPieceRenderer = new HoldingPieceRenderer();
 
 	public constructor(public board: Board, nextUp: TetrominoType[]) {
 		this.nextUpRenderer = new NextUpRenderer(nextUp);
@@ -13,8 +15,9 @@ export default class BoardRenderer implements Drawable2D {
 
 	public draw(ctx: ReadonlyRenderyContext2D): void {
 		flex(ctx, [
-			[{ draw: (c) => this.drawBoard(c) }, 6],
-			[this.nextUpRenderer, 2],
+			[this.holdingPieceRenderer, 1],
+			[{ draw: (c) => this.drawBoard(c) }, 3],
+			[this.nextUpRenderer, 1],
 		]);
 	}
 
@@ -22,6 +25,7 @@ export default class BoardRenderer implements Drawable2D {
 		const rCtx = ctx.clone;
 		const blockSize = rCtx.width / 10;
 		rCtx.inRatio(1 / 2);
+		rCtx.fill("#000000AA");
 
 		for (let y = 0; y < 20; y++) {
 			for (let x = 0; x < 10; x++) {
@@ -40,6 +44,9 @@ export default class BoardRenderer implements Drawable2D {
 
 	public set nextUp(nextUp: TetrominoType[]) {
 		this.nextUpRenderer.nextUp = nextUp;
+	}
+	public set holdingPiece(piece: TetrominoType | undefined) {
+		this.holdingPieceRenderer.piece = piece;
 	}
 }
 

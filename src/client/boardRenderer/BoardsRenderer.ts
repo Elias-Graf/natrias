@@ -34,18 +34,30 @@ export default class BoardsRenderer implements Drawable2D {
 		this.opponentRenderer.draw(opponentCtx);
 	}
 
+	// TODO: convert to setter
 	public updateOpponentBoard(b: Board): void {
 		this.opponentRenderer.board = b;
 	}
+	// TODO: convert to setter
 	public updateOwnBoard(b: Board): void {
 		this.ownRenderer.board = b;
 	}
 
-	public set ownNextUp(nextUp: TetrominoType[]) {
-		this.ownRenderer.nextUp = nextUp;
+	public set ownHoldingPiece(p: TetrominoType | undefined) {
+		this.ownRenderer.holdingPiece = p;
+	}
+	public set ownNextUp(n: TetrominoType[]) {
+		this.ownRenderer.nextUp = n;
+	}
+	public set opponentHoldingPiece(p: TetrominoType | undefined) {
+		this.opponentRenderer.holdingPiece = p;
+	}
+	public set opponentNextUp(n: TetrominoType[]) {
+		this.opponentRenderer.nextUp = n;
 	}
 }
 
+// TODO: remove
 /**
  * @deprecated
  */
@@ -61,6 +73,7 @@ function center(
 
 	return ret;
 }
+// TODO: remove
 /**
  * @deprecated
  */
@@ -76,6 +89,7 @@ function inset(
 
 	return ret;
 }
+// TODO: remove
 /**
  * @deprecated
  */

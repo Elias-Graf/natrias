@@ -5,6 +5,7 @@ import UUID from "./UUID";
 
 interface SendOpponentBoard {
 	board: Board;
+	holdingPiece: TetrominoType | undefined;
 	nextUp: TetrominoType[];
 	opponentId: UUID;
 	type: ServerMessageType.OpponentBoard;
@@ -21,6 +22,7 @@ interface StopGame {
 }
 interface SendYourBoard {
 	board: Board;
+	holdingPiece: TetrominoType | undefined;
 	nextUp: TetrominoType[];
 	type: ServerMessageType.YourBoard;
 }

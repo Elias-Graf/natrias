@@ -80,6 +80,7 @@ export function debugTemplate(
 	}
 
 	// The "0" block is also a block, thus + 1.
+	// TODO: Use function `shared/getDimensionsOfTemplate`
 	const width = maxX - minX + 1;
 	const height = maxY - minY + 1;
 	const offset = new Vector2(minX, minY);

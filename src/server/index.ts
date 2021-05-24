@@ -25,16 +25,15 @@ connection.addListener("message", (client, message) => {
 	if (!game)
 		throw new Error(`Could not find game for client with ip ${client.ip}`);
 
-	if (message.type === ClientMessageType.Move) {
+	if (message.type === ClientMessageType.Move)
 		game.moveActiveTetromino(message.dir);
-		game.emit("change");
-	} else if (message.type === ClientMessageType.Restart) {
+	else if (message.type === ClientMessageType.Restart) {
 		stopAllGames();
 		createAndStartGames();
-	} else if (message.type === ClientMessageType.Rotate) {
+	} else if (message.type === ClientMessageType.Rotate)
 		game.rotateActiveTetromino();
-		game.emit("change");
-	}
+	else if (message.type === ClientMessageType.SwitchWithHoldingPiece)
+		game.switchWithHoldingPiece();
 });
 
 function createAndStartGames() {
@@ -75,18 +74,24 @@ function createAndStartGames() {
 		});
 
 		playerGame.addListener("change", () => {
-			const { board } = playerGame;
+			const { board, holdingPiece } = playerGame;
 			const nextUp = getNextUpListForGame(playerGame, nextUpProvider);
 
 			if (!player.isOpen) return;
-			player.send({ board, nextUp, type: ServerMessageType.YourBoard });
+			player.send({
+				board,
+				holdingPiece,
+				nextUp,
+				type: ServerMessageType.YourBoard,
+			});
 
 			if (!opponent.isOpen) return;
 			opponent.send({
 				board,
+				holdingPiece,
+				nextUp,
 				opponentId: player.uuid,
 				type: ServerMessageType.OpponentBoard,
-				nextUp,
 			});
 		});
 	}
